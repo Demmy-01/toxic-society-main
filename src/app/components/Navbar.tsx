@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
-import { ShoppingBag, Menu, X, Search, Heart } from "lucide-react";
+import {
+  ShoppingBag, Menu, X, Search, Heart,
+  Home, Store, BookOpen, Zap, Info,
+} from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 
@@ -22,14 +25,26 @@ export function Navbar() {
     { label: "ABOUT", to: "/about" },
   ];
 
-  const allLinks = [...leftLinks, ...rightLinks];
+  // Mobile hamburger — only Drops + About
+  const mobileMenuLinks = [
+    { label: "DROPS", to: "/drops", icon: Zap },
+    { label: "ABOUT", to: "/about", icon: Info },
+  ];
+
+  // Bottom nav tabs
+  const bottomNavItems = [
+    { label: "Home",     to: "/",         icon: Home },
+    { label: "Shop",     to: "/shop",     icon: Store },
+    { label: "Wishlist", to: "/wishlist", icon: Heart },
+    { label: "Lookbook", to: "/lookbook", icon: BookOpen },
+  ];
 
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
   return (
     <>
-      {/* Announcement bar */}
+      {/* ── Announcement bar ── */}
       <div
         style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
         className="text-white text-center py-2 text-xs tracking-widest uppercase"
@@ -37,15 +52,16 @@ export function Navbar() {
         Free shipping on orders over $200 &nbsp;·&nbsp; New drop available now
       </div>
 
+      {/* ── Main nav ── */}
       <nav
         className="sticky top-0 z-50 bg-white border-b border-gray-100"
         style={{ boxShadow: "0 1px 20px rgba(0,0,0,0.06)" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Desktop 3-column grid */}
-          <div className="hidden md:grid grid-cols-3 items-center h-16">
 
-            {/* Left nav links */}
+          {/* Desktop 3-column */}
+          <div className="hidden md:grid grid-cols-3 items-center h-16">
+            {/* Left */}
             <div className="flex items-center gap-7 justify-start">
               {leftLinks.map((link) => (
                 <Link
@@ -76,7 +92,7 @@ export function Navbar() {
               </Link>
             </div>
 
-            {/* Right: nav links + icons */}
+            {/* Right */}
             <div className="flex items-center gap-6 justify-end">
               {rightLinks.map((link) => (
                 <Link
@@ -92,40 +108,22 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-
-              {/* Icons */}
               <div className="flex items-center gap-4 ml-1">
-                <button
-                  className="text-gray-800 hover:text-red-700 transition-colors"
-                  onClick={() => setSearchOpen(!searchOpen)}
-                >
+                <button className="text-gray-800 hover:text-red-700 transition-colors" onClick={() => setSearchOpen(!searchOpen)}>
                   <Search size={19} />
                 </button>
-                <Link
-                  to="/wishlist"
-                  className="relative text-gray-800 hover:text-red-700 transition-colors"
-                  title="Wishlist"
-                >
+                <Link to="/wishlist" className="relative text-gray-800 hover:text-red-700 transition-colors" title="Wishlist">
                   <Heart size={19} />
                   {wishlistCount > 0 && (
-                    <span
-                      style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
-                      className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center"
-                    >
+                    <span style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }} className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
                       {wishlistCount}
                     </span>
                   )}
                 </Link>
-                <button
-                  className="relative text-gray-800 hover:text-red-700 transition-colors"
-                  onClick={() => setIsCartOpen(true)}
-                >
+                <button className="relative text-gray-800 hover:text-red-700 transition-colors" onClick={() => setIsCartOpen(true)}>
                   <ShoppingBag size={19} />
                   {totalItems > 0 && (
-                    <span
-                      style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
-                      className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center"
-                    >
+                    <span style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }} className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
                       {totalItems}
                     </span>
                   )}
@@ -134,50 +132,25 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Mobile header */}
+          {/* Mobile top bar */}
           <div className="md:hidden flex items-center justify-between h-16">
             <button className="text-gray-800" onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
-
             <Link to="/">
-              <div
-                style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "4px" }}
-                className="text-2xl text-gray-900 select-none"
-              >
+              <div style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "4px" }} className="text-2xl text-gray-900 select-none">
                 <span style={{ color: "#C41E3A" }}>TOXIC</span>
                 <span className="ml-1 text-gray-900">SOCIETY</span>
               </div>
             </Link>
-
             <div className="flex items-center gap-3">
-              <button
-                className="text-gray-800 hover:text-red-700 transition-colors"
-                onClick={() => setSearchOpen(!searchOpen)}
-              >
+              <button className="text-gray-800 hover:text-red-700 transition-colors" onClick={() => setSearchOpen(!searchOpen)}>
                 <Search size={19} />
               </button>
-              <Link to="/wishlist" className="relative text-gray-800 hover:text-red-700 transition-colors">
-                <Heart size={19} />
-                {wishlistCount > 0 && (
-                  <span
-                    style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
-                    className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center"
-                  >
-                    {wishlistCount}
-                  </span>
-                )}
-              </Link>
-              <button
-                className="relative text-gray-800 hover:text-red-700 transition-colors"
-                onClick={() => setIsCartOpen(true)}
-              >
+              <button className="relative text-gray-800 hover:text-red-700 transition-colors" onClick={() => setIsCartOpen(true)}>
                 <ShoppingBag size={19} />
                 {totalItems > 0 && (
-                  <span
-                    style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
-                    className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center"
-                  >
+                  <span style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }} className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
                     {totalItems}
                   </span>
                 )}
@@ -186,7 +159,7 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Search Bar */}
+        {/* Search bar */}
         {searchOpen && (
           <div className="border-t border-gray-100 bg-white px-4 py-3 flex items-center gap-3">
             <Search size={16} className="text-gray-400" />
@@ -203,42 +176,143 @@ export function Navbar() {
           </div>
         )}
 
-        {/* Mobile Menu */}
+        {/* Mobile dropdown — Drops + About only */}
         {menuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-100 px-4 py-6 flex flex-col gap-5">
-            {allLinks.map((link) => (
+          <div className="md:hidden bg-white border-t border-gray-100 px-5 py-5 flex flex-col gap-4">
+            <p style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "3px", color: "#bbb" }} className="text-[10px] uppercase mb-1">
+              More Pages
+            </p>
+            {mobileMenuLinks.map(({ label, to, icon: Icon }) => (
               <Link
-                key={link.to}
-                to={link.to}
+                key={to}
+                to={to}
                 onClick={() => setMenuOpen(false)}
                 style={{
                   fontFamily: "'Inter', sans-serif",
-                  color: isActive(link.to) ? "#C41E3A" : "#1a1a1a",
+                  color: isActive(to) ? "#C41E3A" : "#1a1a1a",
                 }}
-                className="text-sm tracking-widest uppercase"
+                className="flex items-center gap-3 text-sm tracking-widest uppercase"
               >
-                {link.label}
+                <span
+                  className="w-8 h-8 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: isActive(to) ? "#C41E3A" : "#f3f3f3" }}
+                >
+                  <Icon size={14} style={{ color: isActive(to) ? "white" : "#555" }} />
+                </span>
+                {label}
               </Link>
             ))}
-            <Link
-              to="/wishlist"
-              onClick={() => setMenuOpen(false)}
-              style={{ fontFamily: "'Inter', sans-serif", color: "#1a1a1a" }}
-              className="text-sm tracking-widest uppercase flex items-center gap-2"
-            >
-              Wishlist
-              {wishlistCount > 0 && (
-                <span
-                  style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
-                  className="text-white text-xs w-5 h-5 rounded-full flex items-center justify-center"
-                >
-                  {wishlistCount}
-                </span>
-              )}
-            </Link>
           </div>
         )}
       </nav>
+
+      {/* ══════════════════════════════════════
+          Mobile Bottom Navigation Bar
+          ══════════════════════════════════════ */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50"
+        style={{
+          backgroundColor: "#111111",
+          borderTop: "1px solid rgba(255,255,255,0.07)",
+          boxShadow: "0 -8px 32px rgba(0,0,0,0.5)",
+          height: "66px",
+          display: "flex",
+          alignItems: "stretch",
+        }}
+      >
+        {/* 4 nav links */}
+        {bottomNavItems.map(({ label, to, icon: Icon }) => {
+          const active = isActive(to);
+          return (
+            <Link
+              key={to}
+              to={to}
+              className="flex-1 flex flex-col items-center justify-center gap-[3px] relative overflow-hidden"
+            >
+              {/* Active pill at top */}
+              {active && (
+                <span
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] rounded-b-full transition-all duration-300"
+                  style={{ backgroundColor: "#C41E3A" }}
+                />
+              )}
+
+              {/* Icon */}
+              <div className="relative">
+                <Icon
+                  size={21}
+                  strokeWidth={active ? 2.2 : 1.6}
+                  style={{
+                    color: active ? "#C41E3A" : "rgba(255,255,255,0.4)",
+                    fill: active && to === "/wishlist" ? "#C41E3A" : "none",
+                    transition: "color 0.2s",
+                  }}
+                />
+                {to === "/wishlist" && wishlistCount > 0 && (
+                  <span
+                    style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
+                    className="absolute -top-[7px] -right-[7px] text-white text-[9px] w-[14px] h-[14px] rounded-full flex items-center justify-center font-bold"
+                  >
+                    {wishlistCount}
+                  </span>
+                )}
+              </div>
+
+              {/* Label */}
+              <span
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: "9.5px",
+                  letterSpacing: "0.8px",
+                  color: active ? "#C41E3A" : "rgba(255,255,255,0.35)",
+                  fontWeight: active ? 700 : 400,
+                  transition: "color 0.2s",
+                  textTransform: "uppercase",
+                }}
+              >
+                {label}
+              </span>
+            </Link>
+          );
+        })}
+
+        {/* Cart tab */}
+        <button
+          onClick={() => setIsCartOpen(true)}
+          className="flex-1 flex flex-col items-center justify-center gap-[3px] relative"
+        >
+          <div className="relative">
+            <ShoppingBag
+              size={21}
+              strokeWidth={1.6}
+              style={{ color: "rgba(255,255,255,0.4)" }}
+            />
+            {totalItems > 0 && (
+              <span
+                style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
+                className="absolute -top-[7px] -right-[7px] text-white text-[9px] w-[14px] h-[14px] rounded-full flex items-center justify-center font-bold"
+              >
+                {totalItems}
+              </span>
+            )}
+          </div>
+          <span
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: "9.5px",
+              letterSpacing: "0.8px",
+              color: "rgba(255,255,255,0.35)",
+              fontWeight: 400,
+              textTransform: "uppercase",
+            }}
+          >
+            Cart
+          </span>
+        </button>
+      </nav>
+
+      {/* Spacer so content isn't hidden behind the bottom nav on mobile */}
+      <div className="md:hidden h-[66px]" aria-hidden="true" />
     </>
   );
 }
