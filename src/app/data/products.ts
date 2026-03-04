@@ -5,7 +5,7 @@ import sweatshirt2Img from "../../assets/sweatshirt.png";
 
 
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   price: number;
   originalPrice?: number;
@@ -20,6 +20,7 @@ export interface Product {
   drop: string;
 }
 
+
 export const PRODUCT_IMAGES = {
   sweatshirt: sweatshirtImg,
   belt: beltImg,
@@ -27,9 +28,56 @@ export const PRODUCT_IMAGES = {
   sweatshirt2: sweatshirt2Img,
 };
 
+// Fetch products from Supabase — call this in your pages
+export async function fetchProducts(): Promise<Product[]> {
+  const { supabase } = await import('../../lib/supabase');
+  
+  // Get all LIVE drops
+  const { data: liveDrops } = await supabase
+    .from('drops')
+    .select('id, name, status')
+    .eq('status', 'LIVE');
+  
+  const liveDropIds = new Set(liveDrops?.map(d => d.id) ?? []);
+
+  // Fetch ALL products that are in stock with their drop info
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, drops(name)')
+    .eq('in_stock', true)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('❌ Error fetching products:', error);
+    return [];
+  }
+
+  if (!data || data.length === 0) return [];
+
+  // Filter in JavaScript: keep products with no drop OR products in LIVE drops
+  const filtered = data.filter(p => !p.drop_id || liveDropIds.has(p.drop_id));
+
+  return filtered.map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: Number(p.price),
+    originalPrice: p.original_price ? Number(p.original_price) : undefined,
+    image: p.images?.[0] || '',
+    images: p.images || [],
+    category: p.category,
+    collection: p.collection,
+    drop: (p.drops as { name: string } | null)?.name || '',
+    description: p.description || '',
+    sizes: p.sizes || [],
+    tag: p.tag || undefined,
+    inStock: p.in_stock ?? true,
+  }));
+}
+
+
 export const products: Product[] = [
   {
-    id: 1,
+    id: "static-1",
     name: "Toxic Flame Polo Sweatshirt",
     price: 189,
     originalPrice: 230,
@@ -45,7 +93,7 @@ export const products: Product[] = [
     inStock: true,
   },
   {
-    id: 2,
+    id: "static-2",
     name: "TS Logo Leather Belt",
     price: 129,
     image: PRODUCT_IMAGES.belt,
@@ -60,7 +108,7 @@ export const products: Product[] = [
     inStock: true,
   },
   {
-    id: 3,
+    id: "static-3",
     name: "Toxic Society Barbed Tee",
     price: 89,
     image: PRODUCT_IMAGES.sweatshirt2,
@@ -74,7 +122,7 @@ export const products: Product[] = [
     inStock: true,
   },
   {
-    id: 4,
+    id: "static-4",
     name: "TS Flame Cargo Pants",
     price: 159,
     image: PRODUCT_IMAGES.sweatshirt2,
@@ -88,7 +136,7 @@ export const products: Product[] = [
     inStock: true,
   },
   {
-    id: 5,
+    id: "static-5",
     name: "Toxic Society Cap",
     price: 59,
     originalPrice: 79,
@@ -104,7 +152,7 @@ export const products: Product[] = [
     inStock: true,
   },
   {
-    id: 6,
+    id: "static-6",
     name: "Toxic Zip-Up Hoodie",
     price: 219,
     image: PRODUCT_IMAGES.sweatshirt2,

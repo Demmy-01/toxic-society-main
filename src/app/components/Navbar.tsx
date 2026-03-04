@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
+import logoNoBg from "../../assets/logo-no-bg.png";
 import {
   ShoppingBag, Menu, X, Search, Heart,
   Home, Store, BookOpen, Zap, Info,
@@ -84,10 +85,11 @@ export function Navbar() {
               <Link to="/">
                 <div
                   style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "4px" }}
-                  className="text-2xl text-gray-900 select-none whitespace-nowrap"
+                  className="flex items-center text-2xl text-gray-900 select-none whitespace-nowrap"
                 >
                   <span style={{ color: "#C41E3A" }}>TOXIC</span>
-                  <span className="ml-1 text-gray-900">SOCIETY</span>
+                  <img src={logoNoBg} alt="Toxic Society" className="h-9 w-auto mx-1" />
+                  <span className="text-gray-900">SOCIETY</span>
                 </div>
               </Link>
             </div>
@@ -134,11 +136,16 @@ export function Navbar() {
 
           {/* Mobile top bar */}
           <div className="md:hidden flex items-center justify-between h-16">
-            <button className="text-gray-800" onClick={() => setMenuOpen(!menuOpen)}>
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-            <Link to="/">
-              <div style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "4px" }} className="text-2xl text-gray-900 select-none">
+            <div className="flex items-center gap-3">
+              <button className="text-gray-800" onClick={() => setMenuOpen(!menuOpen)}>
+                {menuOpen ? <X size={22} /> : <Menu size={22} />}
+              </button>
+              <Link to="/">
+                <img src={logoNoBg} alt="Toxic Society" className="h-10 w-auto" />
+              </Link>
+            </div>
+            <Link to="/" className="absolute left-1/2 -translate-x-1/2">
+              <div style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "4px" }} className="text-2xl text-gray-900 select-none whitespace-nowrap">
                 <span style={{ color: "#C41E3A" }}>TOXIC</span>
                 <span className="ml-1 text-gray-900">SOCIETY</span>
               </div>
@@ -157,6 +164,7 @@ export function Navbar() {
               </button>
             </div>
           </div>
+
         </div>
 
         {/* Search bar */}
@@ -210,14 +218,12 @@ export function Navbar() {
           Mobile Bottom Navigation Bar
           ══════════════════════════════════════ */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch"
         style={{
           backgroundColor: "#111111",
           borderTop: "1px solid rgba(255,255,255,0.07)",
           boxShadow: "0 -8px 32px rgba(0,0,0,0.5)",
           height: "66px",
-          display: "flex",
-          alignItems: "stretch",
         }}
       >
         {/* 4 nav links */}

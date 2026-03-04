@@ -3,7 +3,7 @@ import { Star, CheckCircle, ChevronDown, ChevronUp, Edit3 } from "lucide-react";
 import { useReviews } from "../context/ReviewsContext";
 
 interface ReviewsSectionProps {
-  productId: number;
+  productId: string;
   productName: string;
 }
 

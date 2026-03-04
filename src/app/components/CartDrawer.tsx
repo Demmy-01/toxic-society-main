@@ -1,9 +1,11 @@
 import { X, Plus, Minus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 export function CartDrawer() {
   const { items, removeItem, updateQuantity, totalPrice, isCartOpen, setIsCartOpen } = useCart();
+  const { setShowCheckoutModal } = useAuth();
 
   if (!isCartOpen) return null;
 
@@ -151,6 +153,7 @@ export function CartDrawer() {
               Shipping & taxes calculated at checkout
             </p>
             <button
+              onClick={() => { setIsCartOpen(false); setShowCheckoutModal(true); }}
               style={{ backgroundColor: "#C41E3A", fontFamily: "'Bebas Neue', cursive", letterSpacing: "3px" }}
               className="w-full text-white py-3.5 text-lg hover:bg-red-800 transition-colors"
             >

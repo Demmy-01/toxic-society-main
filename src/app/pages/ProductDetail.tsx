@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { ShoppingBag, Heart, ArrowLeft, ChevronDown, ChevronUp, Star } from "lucide-react";
-import { products } from "../data/products";
+import { products as staticProducts, fetchProducts } from "../data/products";
+import type { Product } from "../data/products";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useReviews } from "../context/ReviewsContext";
@@ -11,7 +12,8 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 
 export function ProductDetail() {
   const { id } = useParams();
-  const product = products.find((p) => p.id === Number(id));
+  const [allProducts, setAllProducts] = useState<Product[]>(staticProducts);
+  const product = allProducts.find((p) => p.id === id);
   const { addItem } = useCart();
   const { isWishlisted, toggleItem } = useWishlist();
   const { getAverageRating, getReviewCount } = useReviews();
@@ -19,6 +21,14 @@ export function ProductDetail() {
   const [showDetails, setShowDetails] = useState(false);
   const [showShipping, setShowShipping] = useState(false);
   const [added, setAdded] = useState(false);
+
+  useEffect(() => {
+    fetchProducts().then((data) => {
+      if (data.length > 0) setAllProducts(data);
+    });
+  }, []);
+
+  const related = allProducts.filter((p) => p.id !== id).slice(0, 4);
 
   if (!product) {
     return (
@@ -41,7 +51,6 @@ export function ProductDetail() {
   const wishlisted = isWishlisted(product.id);
   const avgRating = getAverageRating(product.id);
   const reviewCount = getReviewCount(product.id);
-  const related = products.filter((p) => p.id !== product.id).slice(0, 4);
 
   const handleAddToCart = () => {
     if (!selectedSize && product.sizes.length > 1) return;

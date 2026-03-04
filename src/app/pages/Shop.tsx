@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
-import { products, categories, collections, drops, allSizes } from "../data/products";
+import { useState, useMemo, useEffect } from "react";
+import { fetchProducts } from "../data/products";
+import type { Product } from "../data/products";
 import { ProductCard } from "../components/ProductCard";
-import { SlidersHorizontal, X, ChevronDown, ChevronUp } from "lucide-react";
+import { SlidersHorizontal, X, ChevronDown, ChevronUp, Loader2, ShoppingBag } from "lucide-react";
 
 type SortOption = "featured" | "price-asc" | "price-desc" | "newest";
 
@@ -13,7 +14,7 @@ interface Filters {
   priceMax: number;
 }
 
-const PRICE_MAX = 300;
+const FALLBACK_PRICE_MAX = 10000;
 
 function FilterSection({
   title,
@@ -100,13 +101,33 @@ function SizeButton({
 export function Shop() {
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<Filters>({
     categories: [],
     collections: [],
     drops: [],
     sizes: [],
-    priceMax: PRICE_MAX,
+    priceMax: FALLBACK_PRICE_MAX,
   });
+
+  useEffect(() => {
+    fetchProducts().then((data) => {
+      setProducts(data);
+      setLoading(false);
+    });
+  }, []);
+
+  // Derive filter options dynamically from live DB data
+  const categories = useMemo(() => [...new Set(products.map((p) => p.category))].sort(), [products]);
+  const collections = useMemo(() => [...new Set(products.map((p) => p.collection))].filter(Boolean).sort(), [products]);
+  const drops = useMemo(() => [...new Set(products.map((p) => p.drop))].filter(Boolean).sort(), [products]);
+  const allSizes = useMemo(() => [...new Set(products.flatMap((p) => p.sizes))].sort(), [products]);
+  // Actual max price from DB — used as the slider ceiling
+  const maxProductPrice = useMemo(
+    () => (products.length > 0 ? Math.ceil(Math.max(...products.map((p) => p.price)) / 10) * 10 : FALLBACK_PRICE_MAX),
+    [products]
+  );
 
   const toggleFilter = (key: keyof Omit<Filters, "priceMax">, value: string) => {
     setFilters((prev) => {
@@ -119,7 +140,7 @@ export function Shop() {
   };
 
   const clearAll = () => {
-    setFilters({ categories: [], collections: [], drops: [], sizes: [], priceMax: PRICE_MAX });
+    setFilters({ categories: [], collections: [], drops: [], sizes: [], priceMax: maxProductPrice });
   };
 
   const activeFilterCount =
@@ -127,7 +148,7 @@ export function Shop() {
     filters.collections.length +
     filters.drops.length +
     filters.sizes.length +
-    (filters.priceMax < PRICE_MAX ? 1 : 0);
+    (filters.priceMax < maxProductPrice ? 1 : 0);
 
   const filtered = useMemo(() => {
     return products
@@ -142,10 +163,10 @@ export function Shop() {
       .sort((a, b) => {
         if (sortBy === "price-asc") return a.price - b.price;
         if (sortBy === "price-desc") return b.price - a.price;
-        if (sortBy === "newest") return b.id - a.id;
+        if (sortBy === "newest") return b.id.localeCompare(a.id);
         return 0;
       });
-  }, [filters, sortBy]);
+  }, [filters, sortBy, products]);
 
   const FilterPanel = () => (
     <div className="flex flex-col h-full">
@@ -241,15 +262,15 @@ export function Shop() {
               $0
             </span>
             <span style={{ fontFamily: "'Inter', sans-serif", color: "#C41E3A" }} className="text-sm">
-              Up to ${filters.priceMax}
+              Up to ${filters.priceMax >= maxProductPrice ? 'Max' : filters.priceMax}
             </span>
           </div>
           <input
             type="range"
             min={0}
-            max={PRICE_MAX}
+            max={maxProductPrice}
             step={10}
-            value={filters.priceMax}
+            value={Math.min(filters.priceMax, maxProductPrice)}
             onChange={(e) => setFilters((prev) => ({ ...prev, priceMax: Number(e.target.value) }))}
             className="w-full accent-red-700 cursor-pointer"
           />
@@ -278,7 +299,7 @@ export function Shop() {
           Shop All
         </h1>
         <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-gray-400 mt-3 text-sm">
-          {filtered.length} products
+          {loading ? 'Loading...' : `${filtered.length} products`}
         </p>
       </div>
 
@@ -310,7 +331,7 @@ export function Shop() {
               ...filters.collections,
               ...filters.drops,
               ...filters.sizes,
-              ...(filters.priceMax < PRICE_MAX ? [`≤$${filters.priceMax}`] : []),
+              ...(filters.priceMax < maxProductPrice ? [`≤$${filters.priceMax}`] : []),
             ].map((chip) => (
               <span
                 key={chip}
@@ -321,7 +342,7 @@ export function Shop() {
                 <button
                   onClick={() => {
                     if (chip.startsWith("≤$")) {
-                      setFilters((p) => ({ ...p, priceMax: PRICE_MAX }));
+                      setFilters((p) => ({ ...p, priceMax: maxProductPrice }));
                     } else if (categories.includes(chip)) {
                       toggleFilter("categories", chip);
                     } else if (collections.includes(chip)) {
@@ -397,7 +418,51 @@ export function Shop() {
               </div>
             )}
 
-            {filtered.length > 0 ? (
+            {/* Loading state */}
+            {loading && (
+              <div className="flex flex-col items-center justify-center py-32 gap-4">
+                <Loader2 size={32} className="text-gray-300 animate-spin" />
+                <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-400">
+                  Loading products...
+                </p>
+              </div>
+            )}
+
+            {/* No products in DB */}
+            {!loading && products.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-32 gap-4 text-center">
+                <ShoppingBag size={48} className="text-gray-200" />
+                <p
+                  style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "2px" }}
+                  className="text-4xl text-gray-200"
+                >
+                  No products yet
+                </p>
+                <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-400">
+                  Products added from the admin dashboard will appear here.
+                </p>
+              </div>
+            )}
+
+            {!loading && products.length > 0 && filtered.length === 0 && (
+              <div className="text-center py-20">
+                <p
+                  style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "2px" }}
+                  className="text-4xl text-gray-200 mb-4"
+                >
+                  No products match your filters
+                </p>
+                <button
+                  onClick={clearAll}
+                  style={{ color: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
+                  className="text-sm underline cursor-pointer"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+
+            {!loading && filtered.length > 0 && (
               <div
                 className={`grid gap-6 ${
                   filtersOpen
@@ -408,22 +473,6 @@ export function Shop() {
                 {filtered.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
-              </div>
-            ) : (
-              <div className="text-center py-20">
-                <p
-                  style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "2px" }}
-                  className="text-4xl text-gray-200 mb-4"
-                >
-                  No products found
-                </p>
-                <button
-                  onClick={clearAll}
-                  style={{ color: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
-                  className="text-sm underline"
-                >
-                  Clear all filters
-                </button>
               </div>
             )}
           </div>

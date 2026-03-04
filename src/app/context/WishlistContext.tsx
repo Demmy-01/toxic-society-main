@@ -4,8 +4,8 @@ import { Product } from "../data/products";
 interface WishlistContextType {
   items: Product[];
   addItem: (product: Product) => void;
-  removeItem: (id: number) => void;
-  isWishlisted: (id: number) => boolean;
+  removeItem: (id: string) => void;
+  isWishlisted: (id: string) => boolean;
   toggleItem: (product: Product) => void;
   totalItems: number;
 }
@@ -35,12 +35,12 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const removeItem = useCallback((id: number) => {
+  const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
   const isWishlisted = useCallback(
-    (id: number) => items.some((p) => p.id === id),
+    (id: string) => items.some((p) => p.id === id),
     [items]
   );
 

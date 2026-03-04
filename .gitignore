@@ -1,2 +1,19 @@
+# Dependencies
 node_modules
-node_modules
+TX Admin/node_modules
+
+# Environment variables - NEVER commit these
+.env
+.env.local
+.env.*.local
+TX Admin/.env
+TX Admin/.env.local
+TX Admin/.env.*.local
+
+# Build output
+dist
+TX Admin/dist
+
+# Misc
+.DS_Store
+*.log

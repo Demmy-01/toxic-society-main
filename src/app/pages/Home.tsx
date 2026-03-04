@@ -1,6 +1,8 @@
 import { Link } from "react-router";
 import { ArrowRight, Zap } from "lucide-react";
-import { products } from "../data/products";
+import { fetchProducts } from "../data/products";
+import type { Product } from "../data/products";
+import { useState, useEffect } from "react";
 import { ProductCard } from "../components/ProductCard";
 import { DropCountdown } from "../components/DropCountdown";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -11,7 +13,34 @@ import beltImg from "../../assets/belt.png";
 const DROP_04_DATE = new Date("2026-03-15T12:00:00Z");
 
 export function Home() {
-  const featuredProducts = products.slice(0, 4);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loadingCollection, setLoadingCollection] = useState(true);
+
+  useEffect(() => {
+    fetchProducts().then((data) => {
+      setAllProducts(data);
+      setLoadingCollection(false);
+    });
+  }, []);
+
+  // Group by category, pick top 3 for tiles
+  const categoryTiles = (() => {
+    const map = new Map<string, Product[]>();
+    allProducts.forEach((p) => {
+      if (!map.has(p.category)) map.set(p.category, []);
+      map.get(p.category)!.push(p);
+    });
+    return [...map.entries()]
+      .sort((a, b) => b[1].length - a[1].length)
+      .slice(0, 3)
+      .map(([category, items]) => ({
+        category,
+        count: items.length,
+        image: items[0].image,
+      }));
+  })();
+
+  const featuredProducts = allProducts.slice(0, 4);
 
   return (
     <div className="bg-white min-h-screen">
@@ -177,87 +206,64 @@ export function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Tops */}
-          <div className="relative overflow-hidden group cursor-pointer aspect-[3/4] sm:aspect-auto sm:h-80 bg-gray-900">
-            <ImageWithFallback
-              src={sweatshirtImg}
-              alt="Tops"
-              className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity duration-300"
-            />
-            <div className="absolute inset-0 flex flex-col justify-end p-6">
-              <p
-                style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "3px" }}
-                className="text-white text-3xl mb-1"
-              >
-                Tops
-              </p>
-              <p
-                style={{ fontFamily: "'Inter', sans-serif" }}
-                className="text-white/60 text-sm"
-              >
-                3 Items
-              </p>
-            </div>
-            <div
-              style={{ backgroundColor: "#C41E3A" }}
-              className="absolute bottom-0 left-0 right-0 h-1 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
-            />
+        {/* Loading shimmer */}
+        {loadingCollection && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="animate-pulse aspect-[3/4] sm:h-80 bg-gray-100" />
+            ))}
           </div>
+        )}
 
-          {/* Accessories */}
-          <div className="relative overflow-hidden group cursor-pointer aspect-[3/4] sm:aspect-auto sm:h-80 bg-red-900">
-            <ImageWithFallback
-              src={beltImg}
-              alt="Accessories"
-              className="w-full h-full object-cover opacity-70 group-hover:opacity-50 transition-opacity duration-300"
-            />
-            <div className="absolute inset-0 flex flex-col justify-end p-6">
-              <p
-                style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "3px" }}
-                className="text-white text-3xl mb-1"
+        {/* Live category tiles */}
+        {!loadingCollection && categoryTiles.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {categoryTiles.map(({ category, count, image }) => (
+              <Link
+                key={category}
+                to={`/shop?category=${encodeURIComponent(category)}`}
+                className="relative overflow-hidden group aspect-[3/4] sm:aspect-auto sm:h-80 bg-gray-900 block"
               >
-                Accessories
-              </p>
-              <p
-                style={{ fontFamily: "'Inter', sans-serif" }}
-                className="text-white/60 text-sm"
-              >
-                2 Items
-              </p>
-            </div>
-            <div
-              style={{ backgroundColor: "#C41E3A" }}
-              className="absolute bottom-0 left-0 right-0 h-1 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
-            />
+                <img
+                  src={image}
+                  alt={category}
+                  className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity duration-300"
+                />
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <div className="absolute inset-0 flex flex-col justify-end p-6">
+                  <p
+                    style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "3px" }}
+                    className="text-white text-3xl mb-1"
+                  >
+                    {category}
+                  </p>
+                  <p
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                    className="text-white/60 text-sm"
+                  >
+                    {count} {count === 1 ? 'Item' : 'Items'}
+                  </p>
+                </div>
+                {/* Red accent line on hover */}
+                <div
+                  style={{ backgroundColor: "#C41E3A" }}
+                  className="absolute bottom-0 left-0 right-0 h-1 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
+                />
+              </Link>
+            ))}
           </div>
+        )}
 
-          {/* Bottoms */}
-          <div className="relative overflow-hidden group cursor-pointer aspect-[3/4] sm:aspect-auto sm:h-80 bg-gray-800">
-            <ImageWithFallback
-              src={sweatshirtImg}
-              alt="Bottoms"
-              className="w-full h-full object-cover opacity-50 group-hover:opacity-40 transition-opacity duration-300"
-            />
-            <div className="absolute inset-0 flex flex-col justify-end p-6">
-              <p
-                style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "3px" }}
-                className="text-white text-3xl mb-1"
-              >
-                Bottoms
-              </p>
-              <p
-                style={{ fontFamily: "'Inter', sans-serif" }}
-                className="text-white/60 text-sm"
-              >
-                1 Item
-              </p>
-            </div>
-            <div
-              style={{ backgroundColor: "#C41E3A" }}
-              className="absolute bottom-0 left-0 right-0 h-1 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
-            />
-          </div>
+        {/* Mobile see more */}
+        <div className="mt-8 text-center md:hidden">
+          <Link
+            to="/shop"
+            style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "3px", borderColor: "#C41E3A", color: "#C41E3A" }}
+            className="inline-flex items-center gap-2 border px-8 py-3 text-xl hover:bg-red-50 transition-colors"
+          >
+            See More <ArrowRight size={16} />
+          </Link>
         </div>
       </section>
 

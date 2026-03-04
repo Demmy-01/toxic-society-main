@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 
 export interface Review {
   id: string;
-  productId: number;
+  productId: string;
+
   author: string;
   rating: number;
   title: string;
@@ -13,10 +14,10 @@ export interface Review {
 
 interface ReviewsContextType {
   reviews: Review[];
-  getProductReviews: (productId: number) => Review[];
+  getProductReviews: (productId: string) => Review[];
   addReview: (review: Omit<Review, "id" | "date">) => void;
-  getAverageRating: (productId: number) => number;
-  getReviewCount: (productId: number) => number;
+  getAverageRating: (productId: string) => number;
+  getReviewCount: (productId: string) => number;
 }
 
 const ReviewsContext = createContext<ReviewsContextType | undefined>(undefined);
@@ -26,7 +27,7 @@ const STORAGE_KEY = "ts_reviews";
 const seedReviews: Review[] = [
   {
     id: "r1",
-    productId: 1,
+    productId: "static-1",
     author: "Marcus T.",
     rating: 5,
     title: "Unreal quality, turns heads everywhere",
@@ -36,7 +37,8 @@ const seedReviews: Review[] = [
   },
   {
     id: "r2",
-    productId: 1,
+    productId: "static-1",
+
     author: "Jade K.",
     rating: 5,
     title: "Worth every penny",
@@ -46,7 +48,8 @@ const seedReviews: Review[] = [
   },
   {
     id: "r3",
-    productId: 1,
+    productId: "static-1",
+
     author: "DeShawn M.",
     rating: 4,
     title: "Fire piece, slight delay on shipping",
@@ -56,7 +59,7 @@ const seedReviews: Review[] = [
   },
   {
     id: "r4",
-    productId: 2,
+    productId: "static-2",
     author: "Aisha R.",
     rating: 5,
     title: "The belt that completes every fit",
@@ -66,7 +69,7 @@ const seedReviews: Review[] = [
   },
   {
     id: "r5",
-    productId: 2,
+    productId: "static-2",
     author: "Tyler B.",
     rating: 4,
     title: "Statement piece, as described",
@@ -76,7 +79,7 @@ const seedReviews: Review[] = [
   },
   {
     id: "r6",
-    productId: 3,
+    productId: "static-3",
     author: "Zara N.",
     rating: 5,
     title: "The perfect oversized tee",
@@ -86,7 +89,7 @@ const seedReviews: Review[] = [
   },
   {
     id: "r7",
-    productId: 4,
+    productId: "static-4",
     author: "Kevin O.",
     rating: 5,
     title: "The cargos to rule them all",
@@ -96,7 +99,7 @@ const seedReviews: Review[] = [
   },
   {
     id: "r8",
-    productId: 5,
+    productId: "static-5",
     author: "Priya S.",
     rating: 4,
     title: "Clean cap, great everyday staple",
@@ -106,7 +109,7 @@ const seedReviews: Review[] = [
   },
   {
     id: "r9",
-    productId: 6,
+    productId: "static-6",
     author: "Elijah W.",
     rating: 5,
     title: "Best zip-up I've ever owned",
@@ -131,7 +134,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   }, [reviews]);
 
   const getProductReviews = useCallback(
-    (productId: number) => reviews.filter((r) => r.productId === productId),
+    (productId: string) => reviews.filter((r) => r.productId === productId),
     [reviews]
   );
 
@@ -145,7 +148,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const getAverageRating = useCallback(
-    (productId: number) => {
+    (productId: string) => {
       const productReviews = reviews.filter((r) => r.productId === productId);
       if (!productReviews.length) return 0;
       return productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length;
@@ -154,7 +157,7 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const getReviewCount = useCallback(
-    (productId: number) => reviews.filter((r) => r.productId === productId).length,
+    (productId: string) => reviews.filter((r) => r.productId === productId).length,
     [reviews]
   );
 
