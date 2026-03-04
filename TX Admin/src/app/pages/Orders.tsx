@@ -114,28 +114,28 @@ export default function Orders({ onLogout }: OrdersProps) {
   return (
     <DashboardLayout title="Orders" onLogout={onLogout}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl text-white mb-1">Order Management</h1>
+          <h1 className="text-xl md:text-2xl text-white mb-1">Order Management</h1>
           <p className="text-neutral-400 text-sm">Manage and track all customer orders</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#dc2626] text-white rounded-xl hover:bg-[#b91c1c] transition-colors">
+        <button className="flex items-center gap-2 px-4 py-2 bg-[#dc2626] text-white rounded-xl hover:bg-[#b91c1c] transition-colors self-start sm:self-auto">
           <Download className="w-4 h-4" />
           Export Orders
         </button>
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-6 mb-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-4 md:p-6 mb-6">
+        <div className="flex flex-col gap-3">
           {/* Status Filters */}
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-neutral-400" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <Filter className="w-4 h-4 text-neutral-400 shrink-0" />
             {statuses.map((status) => (
               <button
                 key={status}
                 onClick={() => setSelectedStatus(status)}
-                className={`px-4 py-2 rounded-xl text-sm transition-all ${
+                className={`px-3 py-1.5 rounded-xl text-xs md:text-sm transition-all ${
                   selectedStatus === status
                     ? 'bg-[#dc2626] text-white'
                     : 'bg-[#0f0f0f] text-neutral-400 hover:text-white'
@@ -145,7 +145,6 @@ export default function Orders({ onLogout }: OrdersProps) {
               </button>
             ))}
           </div>
-
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
@@ -154,14 +153,14 @@ export default function Orders({ onLogout }: OrdersProps) {
               placeholder="Search orders..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-[#0f0f0f] border border-neutral-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#dc2626] transition-colors w-64"
+              className="w-full bg-[#0f0f0f] border border-neutral-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#dc2626] transition-colors"
             />
           </div>
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl overflow-hidden">
+      {/* Orders Table - desktop */}
+      <div className="hidden md:block bg-[#1a1a1a] border border-neutral-800 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-[#0f0f0f]">
@@ -190,8 +189,8 @@ export default function Orders({ onLogout }: OrdersProps) {
                 </tr>
               ) : (
                 filteredOrders.map((order) => (
-                  <tr 
-                    key={order.id} 
+                  <tr
+                    key={order.id}
                     className="border-t border-neutral-800 hover:bg-[#0f0f0f] transition-colors"
                   >
                     <td className="px-6 py-4">
@@ -222,7 +221,7 @@ export default function Orders({ onLogout }: OrdersProps) {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <button 
+                        <button
                           onClick={() => setSelectedOrder(order.id)}
                           className="p-2 hover:bg-[#1a1a1a] rounded-lg transition-colors"
                         >
@@ -241,20 +240,67 @@ export default function Orders({ onLogout }: OrdersProps) {
         </div>
       </div>
 
+      {/* Orders Cards - mobile */}
+      <div className="md:hidden space-y-3">
+        {filteredOrders.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-12">
+            <div className="w-16 h-16 bg-[#1a1a1a] rounded-full flex items-center justify-center">
+              <Search className="w-8 h-8 text-neutral-600" />
+            </div>
+            <p className="text-neutral-400">No orders found</p>
+          </div>
+        ) : (
+          filteredOrders.map((order) => (
+            <div key={order.id} className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-white text-sm font-medium">{order.id}</p>
+                  <p className="text-neutral-400 text-xs mt-0.5">{order.customer}</p>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-xs border ${statusColors[order.status]}`}>
+                  {order.status}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <p className="text-xs text-neutral-500">Amount</p>
+                    <p className="text-white text-sm">{order.amount}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Items</p>
+                    <p className="text-neutral-300 text-sm">{order.items}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Date</p>
+                    <p className="text-neutral-300 text-sm">{order.date}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedOrder(order.id)}
+                  className="p-2 bg-[#0f0f0f] rounded-lg"
+                >
+                  <Eye className="w-4 h-4 text-neutral-400" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
       {/* Order Detail Modal */}
       {selectedOrder && (
         <div 
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
           onClick={() => setSelectedOrder(null)}
         >
-          <div 
-            className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-8 max-w-2xl w-full mx-4"
+          <div
+            className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-5 md:p-8 max-w-2xl w-full mx-2 my-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-2xl text-white mb-6">Order Details: {selectedOrder}</h2>
-            
+            <h2 className="text-xl md:text-2xl text-white mb-6">Order Details: {selectedOrder}</h2>
             {/* Order Info Grid */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               <div className="bg-[#0f0f0f] border border-neutral-800 rounded-xl p-4">
                 <p className="text-neutral-400 text-sm mb-2">Customer Information</p>
                 <p className="text-white">Marcus Chen</p>

@@ -74,7 +74,7 @@ export default function Analytics({ onLogout }: AnalyticsProps) {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
         <div className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-3 bg-[#0f0f0f] rounded-xl">
@@ -162,7 +162,7 @@ export default function Analytics({ onLogout }: AnalyticsProps) {
       </div>
 
       {/* Conversion Funnel & Traffic Sources */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
         {/* Conversion Funnel */}
         <div className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-6">
           <h3 className="text-lg text-white mb-6">Conversion Funnel</h3>
@@ -237,7 +237,7 @@ export default function Analytics({ onLogout }: AnalyticsProps) {
       </div>
 
       {/* Top Products & Customer Metrics */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
         {/* Top Products */}
         <div className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-6">
           <h3 className="text-lg text-white mb-6">Top Selling Products</h3>
@@ -285,7 +285,7 @@ export default function Analytics({ onLogout }: AnalyticsProps) {
       {/* Abandoned Cart */}
       <div className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-6">
         <h3 className="text-lg text-white mb-6">Abandoned Cart Analytics</h3>
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-[#0f0f0f] rounded-xl p-4">
             <p className="text-neutral-400 text-sm mb-2">Total Abandoned</p>
             <p className="text-2xl text-white mb-1">892</p>

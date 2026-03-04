@@ -69,7 +69,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   return (
     <DashboardLayout title="Dashboard" onLogout={onLogout}>
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
         <StatCard
           icon={<DollarSign className="w-6 h-6 text-[#dc2626]" />}
           label="Today's Revenue"
@@ -101,9 +101,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
         {/* Revenue Trend Chart */}
-        <div className="col-span-2 bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-6">
+        <div className="lg:col-span-2 bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-6">
           <h3 className="text-lg text-white mb-6">Revenue Trend (7 Days)</h3>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={revenueData}>
@@ -182,9 +182,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       </div>
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Recent Orders */}
-        <div className="col-span-2 bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-6">
+        <div className="lg:col-span-2 bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-6">
           <h3 className="text-lg text-white mb-6">Recent Orders</h3>
           <div className="overflow-x-auto">
             <table className="w-full">

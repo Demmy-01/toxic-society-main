@@ -217,14 +217,14 @@ export default function Products({ onLogout }: ProductsProps) {
   return (
     <DashboardLayout title="Products" onLogout={onLogout}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl text-white mb-1">Product Management</h1>
+          <h1 className="text-xl md:text-2xl text-white mb-1">Product Management</h1>
           <p className="text-neutral-400 text-sm">{products.length} products in catalog</p>
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-[#dc2626] text-white rounded-xl hover:bg-[#b91c1c] transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 bg-[#dc2626] text-white rounded-xl hover:bg-[#b91c1c] transition-colors cursor-pointer self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           Add Product
@@ -348,47 +348,49 @@ export default function Products({ onLogout }: ProductsProps) {
       {/* List view */}
       {!loadingProducts && filteredProducts.length > 0 && viewMode === 'list' && (
         <div className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-[#0f0f0f]">
-              <tr>
-                <th className="text-left text-sm text-neutral-400 px-6 py-4">Product</th>
-                <th className="text-left text-sm text-neutral-400 px-6 py-4">Category</th>
-                <th className="text-left text-sm text-neutral-400 px-6 py-4">Price</th>
-                <th className="text-left text-sm text-neutral-400 px-6 py-4">Sizes</th>
-                <th className="text-left text-sm text-neutral-400 px-6 py-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.map((product) => (
-                <tr key={product.id} className="border-t border-neutral-800 hover:bg-[#0f0f0f] transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-[#0f0f0f] rounded-lg overflow-hidden shrink-0">
-                        {product.images?.[0]
-                          ? <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                          : <ImageIcon className="w-5 h-5 text-neutral-700 m-auto mt-3" />
-                        }
-                      </div>
-                      <span className="text-white text-sm">{product.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4"><span className="text-neutral-400 text-sm">{product.category}</span></td>
-                  <td className="px-6 py-4"><span className="text-white text-sm">${product.price.toFixed(2)}</span></td>
-                  <td className="px-6 py-4"><span className="text-neutral-400 text-sm">{(product.sizes ?? []).join(', ') || '—'}</span></td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => openEdit(product)} className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors cursor-pointer">
-                        <Edit className="w-4 h-4 text-neutral-400 hover:text-white" />
-                      </button>
-                      <button onClick={() => handleDelete(product.id)} className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors cursor-pointer">
-                        <Trash2 className="w-4 h-4 text-neutral-400 hover:text-[#dc2626]" />
-                      </button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-[#0f0f0f]">
+                <tr>
+                  <th className="text-left text-sm text-neutral-400 px-6 py-4">Product</th>
+                  <th className="text-left text-sm text-neutral-400 px-6 py-4">Category</th>
+                  <th className="text-left text-sm text-neutral-400 px-6 py-4">Price</th>
+                  <th className="text-left text-sm text-neutral-400 px-6 py-4">Sizes</th>
+                  <th className="text-left text-sm text-neutral-400 px-6 py-4">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredProducts.map((product) => (
+                  <tr key={product.id} className="border-t border-neutral-800 hover:bg-[#0f0f0f] transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-[#0f0f0f] rounded-lg overflow-hidden shrink-0">
+                          {product.images?.[0]
+                            ? <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                            : <ImageIcon className="w-5 h-5 text-neutral-700 m-auto mt-3" />
+                          }
+                        </div>
+                        <span className="text-white text-sm">{product.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4"><span className="text-neutral-400 text-sm">{product.category}</span></td>
+                    <td className="px-6 py-4"><span className="text-white text-sm">${product.price.toFixed(2)}</span></td>
+                    <td className="px-6 py-4"><span className="text-neutral-400 text-sm">{(product.sizes ?? []).join(', ') || '—'}</span></td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => openEdit(product)} className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors cursor-pointer">
+                          <Edit className="w-4 h-4 text-neutral-400 hover:text-white" />
+                        </button>
+                        <button onClick={() => handleDelete(product.id)} className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors cursor-pointer">
+                          <Trash2 className="w-4 h-4 text-neutral-400 hover:text-[#dc2626]" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -396,7 +398,7 @@ export default function Products({ onLogout }: ProductsProps) {
       {showForm && (
         <div className="fixed inset-0 bg-black/70 flex items-start justify-center z-50 overflow-y-auto p-4">
           <div
-            className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-8 max-w-2xl w-full my-8"
+            className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-5 md:p-8 max-w-2xl w-full my-4 mx-2"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
