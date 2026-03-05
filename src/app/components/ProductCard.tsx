@@ -5,6 +5,7 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useReviews } from "../context/ReviewsContext";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { useCurrency } from "../context/CurrencyContext";
 
 interface ProductCardProps {
   product: Product;
@@ -14,6 +15,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
   const { isWishlisted, toggleItem } = useWishlist();
   const { getAverageRating, getReviewCount } = useReviews();
+  const { formatPrice } = useCurrency();
 
   const wishlisted = isWishlisted(product.id);
   const avgRating = getAverageRating(product.id);
@@ -178,11 +180,11 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center justify-between pt-0.5">
           <div className="flex items-center gap-2">
             <span style={{ fontFamily: "'Inter', sans-serif", color: "#C41E3A" }} className="text-sm font-medium">
-              ${product.price.toFixed(2)}
+              {formatPrice(product.price)}
             </span>
             {product.originalPrice && (
               <span style={{ fontFamily: "'Inter', sans-serif" }} className="text-xs text-gray-400 line-through">
-                ${product.originalPrice.toFixed(2)}
+                {formatPrice(product.originalPrice)}
               </span>
             )}
           </div>

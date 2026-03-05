@@ -9,6 +9,7 @@ import { useReviews } from "../context/ReviewsContext";
 import { ProductCard } from "../components/ProductCard";
 import { ReviewsSection } from "../components/ReviewsSection";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { useCurrency } from "../context/CurrencyContext";
 
 export function ProductDetail() {
   const { id } = useParams();
@@ -17,6 +18,7 @@ export function ProductDetail() {
   const { addItem } = useCart();
   const { isWishlisted, toggleItem } = useWishlist();
   const { getAverageRating, getReviewCount } = useReviews();
+  const { formatPrice } = useCurrency();
   const [selectedSize, setSelectedSize] = useState("");
   const [showDetails, setShowDetails] = useState(false);
   const [showShipping, setShowShipping] = useState(false);
@@ -160,11 +162,11 @@ export function ProductDetail() {
             {/* Price */}
             <div className="flex items-center gap-3 mb-6">
               <span style={{ fontFamily: "'Inter', sans-serif", color: "#C41E3A" }} className="text-2xl">
-                ${product.price}
+                {formatPrice(product.price)}
               </span>
               {product.originalPrice && (
                 <span style={{ fontFamily: "'Inter', sans-serif" }} className="text-base text-gray-400 line-through">
-                  ${product.originalPrice}
+                  {formatPrice(product.originalPrice)}
                 </span>
               )}
               {product.originalPrice && (
@@ -172,7 +174,7 @@ export function ProductDetail() {
                   style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
                   className="text-white text-xs px-2 py-0.5"
                 >
-                  Save ${product.originalPrice - product.price}
+                  Save {formatPrice(product.originalPrice - product.price)}
                 </span>
               )}
             </div>
@@ -259,13 +261,7 @@ export function ProductDetail() {
               </button>
               {showDetails && (
                 <div style={{ fontFamily: "'Inter', sans-serif" }} className="pb-4 text-sm text-gray-500 leading-relaxed">
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>100% Premium heavyweight cotton</li>
-                    <li>Embroidered Toxic Society logo</li>
-                    <li>Rhinestone flame detailing</li>
-                    <li>Ribbed collar and cuffs</li>
-                    <li>Limited edition drop — once gone, it's gone</li>
-                  </ul>
+                  {product.description || "No details available for this product."}
                 </div>
               )}
             </div>

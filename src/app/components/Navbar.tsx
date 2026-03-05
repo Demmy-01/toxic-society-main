@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import logoNoBg from "../../assets/logo-no-bg.png";
 import {
   ShoppingBag, Menu, X, Search, Heart,
@@ -13,7 +13,17 @@ export function Navbar() {
   const { totalItems: wishlistCount } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    const q = searchQuery.trim();
+    if (!q) return;
+    navigate(`/shop?q=${encodeURIComponent(q)}`);
+    setSearchOpen(false);
+    setSearchQuery("");
+  };
 
   const leftLinks = [
     { label: "HOME", to: "/" },
@@ -174,11 +184,21 @@ export function Navbar() {
             <input
               autoFocus
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Search products..."
               style={{ fontFamily: "'Inter', sans-serif" }}
               className="flex-1 outline-none text-sm text-gray-800 placeholder-gray-400 bg-transparent"
             />
-            <button onClick={() => setSearchOpen(false)}>
+            <button
+              onClick={handleSearch}
+              style={{ fontFamily: "'Inter', sans-serif", color: "#C41E3A" }}
+              className="text-xs uppercase tracking-widest whitespace-nowrap hover:opacity-70 transition-opacity"
+            >
+              Go
+            </button>
+            <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }}>
               <X size={16} className="text-gray-400" />
             </button>
           </div>
@@ -316,9 +336,6 @@ export function Navbar() {
           </span>
         </button>
       </nav>
-
-      {/* Spacer so content isn't hidden behind the bottom nav on mobile */}
-      <div className="md:hidden h-[66px]" aria-hidden="true" />
     </>
   );
 }

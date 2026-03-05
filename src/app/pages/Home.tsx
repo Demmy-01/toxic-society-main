@@ -6,21 +6,40 @@ import { useState, useEffect } from "react";
 import { ProductCard } from "../components/ProductCard";
 import { DropCountdown } from "../components/DropCountdown";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { supabase } from "../../lib/supabase";
 import sweatshirtImg from "../../assets/09743e963667fce523552d94caf5de8bf4cf5241.png";
 import beltImg from "../../assets/belt.png";
 
-// Next drop: March 15 2026
-const DROP_04_DATE = new Date("2026-03-15T12:00:00Z");
+interface NextDrop {
+  name: string;
+  label: string;
+  drop_date: string;
+}
 
 export function Home() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loadingCollection, setLoadingCollection] = useState(true);
+  const [nextDrop, setNextDrop] = useState<NextDrop | null>(null);
 
   useEffect(() => {
     fetchProducts().then((data) => {
       setAllProducts(data);
       setLoadingCollection(false);
     });
+  }, []);
+
+  useEffect(() => {
+    supabase
+      .from("drops")
+      .select("name, label, drop_date")
+      .eq("status", "UPCOMING")
+      .not("drop_date", "is", null)
+      .order("drop_date", { ascending: true })
+      .limit(1)
+      .single()
+      .then(({ data }) => {
+        if (data) setNextDrop(data);
+      });
   }, []);
 
   // Group by category, pick top 3 for tiles
@@ -269,12 +288,24 @@ export function Home() {
 
       {/* Drop Countdown */}
       <section>
-        <DropCountdown
-          targetDate={DROP_04_DATE}
-          dropName="DROP 04 — VOID SERIES"
-          subtitle="The next chapter arrives March 15, 2026."
-          variant="dark"
-        />
+        {nextDrop ? (
+          <DropCountdown
+            targetDate={new Date(nextDrop.drop_date)}
+            dropName={`${nextDrop.name} — ${nextDrop.label}`}
+            subtitle={`The next chapter arrives ${new Date(nextDrop.drop_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.`}
+            variant="dark"
+          />
+        ) : (
+          // No upcoming drop found — hide the section entirely
+          <div style={{ backgroundColor: "#0f0f0f" }} className="py-16 px-4 text-center">
+            <p
+              style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "4px" }}
+              className="text-3xl text-white"
+            >
+              NEXT DROP COMING SOON
+            </p>
+          </div>
+        )}
         <div style={{ backgroundColor: "#0f0f0f" }} className="pb-10 text-center">
           <Link
             to="/drops"

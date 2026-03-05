@@ -234,7 +234,7 @@ export function Drops() {
         </div>
       </div>
 
-      {/* ── Per-drop section: locked preview OR live products ── */}
+      {/* ── Per-drop section ── */}
       {activeDrops.map((drop) => {
         const live = isDropLive(drop, now);
         const products = dropProductsMap[drop.id] ?? [];
@@ -242,71 +242,200 @@ export function Drops() {
         return (
           <div
             key={drop.id}
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pb-10 border-b border-gray-100 last:border-0"
+            className="border-b border-gray-100 last:border-0"
           >
-            {/* Section header */}
-            <div className="text-center mb-12">
-              <p
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  letterSpacing: "4px",
-                  color: live ? "#16a34a" : "#C41E3A",
-                }}
-                className="text-xs uppercase mb-3 flex items-center justify-center gap-1"
-              >
-                {live ? (
+            {live ? (
+              /* ── LIVE: editorial split layout ── */
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                {/* Top editorial strip: text left | image right */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
+                  {/* Left: content */}
+                  <div>
+                    {/* Live badge */}
+                    <div className="flex items-center gap-2 mb-5">
+                      <div className="relative flex items-center justify-center">
+                        <span
+                          className="absolute inline-flex h-4 w-4 rounded-full opacity-75 animate-ping"
+                          style={{ backgroundColor: "#16a34a" }}
+                        />
+                        <span
+                          className="relative inline-flex h-3 w-3 rounded-full"
+                          style={{ backgroundColor: "#22c55e" }}
+                        />
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: "'Inter', sans-serif",
+                          letterSpacing: "4px",
+                          color: "#16a34a",
+                        }}
+                        className="text-xs uppercase font-semibold flex items-center gap-1"
+                      >
+                        <Zap size={11} fill="#16a34a" /> Now Live
+                      </span>
+                    </div>
+
+                    {/* Drop name */}
+                    <h2
+                      style={{
+                        fontFamily: "'Bebas Neue', cursive",
+                        letterSpacing: "4px",
+                      }}
+                      className="text-7xl sm:text-8xl text-gray-900 leading-none mb-2"
+                    >
+                      {drop.name}
+                    </h2>
+                    <p
+                      style={{
+                        fontFamily: "'Bebas Neue', cursive",
+                        letterSpacing: "3px",
+                        color: "#C41E3A",
+                      }}
+                      className="text-2xl sm:text-3xl mb-6"
+                    >
+                      {drop.label}
+                    </p>
+
+                    {/* Description */}
+                    <p
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                      className="text-gray-500 text-sm leading-relaxed mb-8 max-w-sm"
+                    >
+                      {drop.description ?? "Available now. Get it before it's gone."}
+                    </p>
+
+                    {/* Meta row */}
+                    <div
+                      style={{ borderColor: "#e5e5e5" }}
+                      className="flex items-center gap-6 border-t pt-6 mb-8"
+                    >
+                      <div>
+                        <p
+                          style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "2px" }}
+                          className="text-[10px] uppercase text-gray-400 mb-0.5"
+                        >
+                          Status
+                        </p>
+                        <p
+                          style={{ fontFamily: "'Inter', sans-serif", color: "#16a34a" }}
+                          className="text-xs font-semibold uppercase"
+                        >
+                          Live Now
+                        </p>
+                      </div>
+                      <div
+                        className="w-px h-8 bg-gray-200"
+                      />
+                      <div>
+                        <p
+                          style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "2px" }}
+                          className="text-[10px] uppercase text-gray-400 mb-0.5"
+                        >
+                          Items
+                        </p>
+                        <p
+                          style={{ fontFamily: "'Inter', sans-serif" }}
+                          className="text-xs font-semibold text-gray-800"
+                        >
+                          {products.length > 0 ? `${products.length} pieces` : "Coming soon"}
+                        </p>
+                      </div>
+                      {drop.date && (
+                        <>
+                          <div className="w-px h-8 bg-gray-200" />
+                          <div>
+                            <p
+                              style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "2px" }}
+                              className="text-[10px] uppercase text-gray-400 mb-0.5"
+                            >
+                              Dropped
+                            </p>
+                            <p
+                              style={{ fontFamily: "'Inter', sans-serif" }}
+                              className="text-xs font-semibold text-gray-800"
+                            >
+                              {drop.date}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* CTA */}
+                    <Link
+                      to="/shop"
+                      style={{
+                        backgroundColor: "#C41E3A",
+                        fontFamily: "'Bebas Neue', cursive",
+                        letterSpacing: "3px",
+                      }}
+                      className="inline-flex items-center gap-3 text-white px-8 py-4 text-xl hover:bg-red-800 transition-colors"
+                    >
+                      Shop This Drop <ArrowRight size={18} />
+                    </Link>
+                  </div>
+
+                  {/* Right: image contained in portrait frame */}
+                  {drop.image_url ? (
+                    <div className="relative">
+                      {/* Decorative offset border */}
+                      <div
+                        style={{ borderColor: "#C41E3A" }}
+                        className="absolute -top-3 -right-3 w-full h-full border-2 z-0"
+                      />
+                      <div className="relative z-10 overflow-hidden aspect-[3/4] w-full max-w-sm mx-auto lg:max-w-none">
+                        <img
+                          src={drop.image_url}
+                          alt={drop.name}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Subtle gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      style={{ backgroundColor: "#f5f5f5" }}
+                      className="aspect-[3/4] flex items-center justify-center"
+                    >
+                      <span
+                        style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "4px" }}
+                        className="text-gray-300 text-4xl"
+                      >
+                        {drop.name}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Products grid */}
+                {products.length > 0 ? (
                   <>
-                    <Zap size={12} fill="#16a34a" />{" "}
-                    <span className="font-semibold">Now Live</span>
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className="h-px flex-1 bg-gray-100" />
+                      <span
+                        style={{
+                          fontFamily: "'Inter', sans-serif",
+                          letterSpacing: "3px",
+                          color: "#999",
+                        }}
+                        className="text-[10px] uppercase"
+                      >
+                        Available Now
+                      </span>
+                      <div className="h-px flex-1 bg-gray-100" />
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {products.map((p) => (
+                        <ProductCard
+                          key={p.id}
+                          product={dbToProduct(p, drop.name)}
+                        />
+                      ))}
+                    </div>
                   </>
                 ) : (
-                  "Sneak Peek"
-                )}
-              </p>
-              <h2
-                style={{
-                  fontFamily: "'Bebas Neue', cursive",
-                  letterSpacing: "4px",
-                }}
-                className="text-6xl text-gray-900"
-              >
-                {drop.name.toUpperCase()} {live ? "— SHOP NOW" : "PREVIEW"}
-              </h2>
-              <p
-                style={{ fontFamily: "'Inter', sans-serif" }}
-                className="text-sm text-gray-400 mt-3"
-              >
-                {live
-                  ? `${drop.label} is now live. Get it before it's gone.`
-                  : `Selected pieces from the upcoming ${drop.label}. Details locked.`}
-              </p>
-            </div>
-
-            {live ? (
-              /* ── LIVE: show drop image AND purchasable ProductCards ── */
-              <div className="max-w-5xl mx-auto">
-                {drop.image_url && (
-                  <div className="mb-12 w-full aspect-video md:aspect-[21/9] overflow-hidden rounded-2xl relative shadow-sm">
-                    <img
-                      src={drop.image_url}
-                      alt={drop.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                  </div>
-                )}
-
-                {products.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {products.map((p) => (
-                      <ProductCard
-                        key={p.id}
-                        product={dbToProduct(p, drop.name)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                  <div className="text-center py-12 border border-dashed border-gray-200 bg-gray-50/50">
                     <p
                       style={{ fontFamily: "'Inter', sans-serif" }}
                       className="text-gray-400 text-sm mb-4"
@@ -315,10 +444,7 @@ export function Drops() {
                     </p>
                     <Link
                       to="/shop"
-                      style={{
-                        color: "#16a34a",
-                        fontFamily: "'Inter', sans-serif",
-                      }}
+                      style={{ color: "#16a34a", fontFamily: "'Inter', sans-serif" }}
                       className="inline-flex items-center gap-1 text-sm hover:gap-2 transition-all font-medium"
                     >
                       Browse the shop <ArrowRight size={14} />
@@ -327,53 +453,67 @@ export function Drops() {
                 )}
               </div>
             ) : (
-              /* ── UPCOMING: single proper sized blurred card ── */
-              <div className="max-w-md mx-auto relative overflow-hidden rounded-2xl shadow-xl">
-                <div className="aspect-[3/4] overflow-hidden bg-black">
-                  {drop.image_url ? (
-                    <img
-                      src={drop.image_url}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      style={{
-                        filter: "blur(8px)",
-                        transform: "scale(1.12)",
-                        opacity: 0.55,
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-900" />
-                  )}
-                </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
-                  <Lock
-                    size={36}
-                    className="text-white mb-3 opacity-90 drop-shadow-md"
-                  />
-                  <span
-                    style={{
-                      fontFamily: "'Bebas Neue', cursive",
-                      letterSpacing: "5px",
-                    }}
-                    className="text-white text-3xl opacity-90 drop-shadow-md"
-                  >
-                    COMING SOON
-                  </span>
-                  <span
+              /* ── UPCOMING: blurred locked preview ── */
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pb-10">
+                <div className="text-center mb-12">
+                  <p
                     style={{
                       fontFamily: "'Inter', sans-serif",
-                      letterSpacing: "3px",
+                      letterSpacing: "4px",
+                      color: "#C41E3A",
                     }}
-                    className="text-white/80 text-sm uppercase mt-2 drop-shadow-sm font-semibold"
+                    className="text-xs uppercase mb-3"
                   >
-                    {drop.name}
-                  </span>
+                    Sneak Peek
+                  </p>
+                  <h2
+                    style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "4px" }}
+                    className="text-6xl text-gray-900"
+                  >
+                    {drop.name.toUpperCase()} PREVIEW
+                  </h2>
+                  <p
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                    className="text-sm text-gray-400 mt-3"
+                  >
+                    Selected pieces from the upcoming {drop.label}. Details locked.
+                  </p>
+                </div>
+                <div className="max-w-md mx-auto relative overflow-hidden rounded-2xl shadow-xl">
+                  <div className="aspect-[3/4] overflow-hidden bg-black">
+                    {drop.image_url ? (
+                      <img
+                        src={drop.image_url}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        style={{ filter: "blur(8px)", transform: "scale(1.12)", opacity: 0.55 }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-900" />
+                    )}
+                  </div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
+                    <Lock size={36} className="text-white mb-3 opacity-90 drop-shadow-md" />
+                    <span
+                      style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "5px" }}
+                      className="text-white text-3xl opacity-90 drop-shadow-md"
+                    >
+                      COMING SOON
+                    </span>
+                    <span
+                      style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "3px" }}
+                      className="text-white/80 text-sm uppercase mt-2 drop-shadow-sm font-semibold"
+                    >
+                      {drop.name}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         );
       })}
+
 
       {/* ── Past / Live archive ── */}
       {pastDrops.length > 0 && (

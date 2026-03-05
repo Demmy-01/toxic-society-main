@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { ArrowRight, Play } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import sweatshirtImg from "../../assets/09743e963667fce523552d94caf5de8bf4cf5241.png";
-import beltImg from "../../assets/belt.png";
+import flamImg from "../../assets/ts-tshirt-2.jpeg";
+import metalImg from "../../assets/86aeade7262b02c7fbb79d4cb1ce30e8984bff4e.png";
+import edgeImg from "../../assets/sweatshirt.png";
 
 export const campaigns = [
   {
@@ -14,8 +15,8 @@ export const campaigns = [
     tagline: "Born in fire. Worn in calm.",
     description:
       "The Flame Series channels the paradox at the heart of Toxic Society — destructive beauty, refined rage. Shot on location at an abandoned industrial site, the campaign captures what it means to carry chaos gracefully.",
-    heroImg: sweatshirtImg,
-    heroUnsplash: "https://images.unsplash.com/photo-1595506832554-d3d3b715eff4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1600",
+    heroImg: flamImg,
+    heroUnsplash: flamImg,
     editorialImg: "https://images.unsplash.com/photo-1768742466928-7eb18e2fcb6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200",
     accentImg: "https://images.unsplash.com/photo-1528588301474-23126537236b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=900",
     color: "#C41E3A",
@@ -30,8 +31,8 @@ export const campaigns = [
     tagline: "Hardware that speaks louder than words.",
     description:
       "Our accessories campaign strips everything back to the object itself — raw leather, cold metal, and the Toxic Society logo as the only language needed. Minimalism with maximum edge.",
-    heroImg: beltImg,
-    heroUnsplash: "https://images.unsplash.com/photo-1734383524180-3c6f9b21e8e3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1600",
+    heroImg: metalImg,
+    heroUnsplash: metalImg,
     editorialImg: "https://images.unsplash.com/photo-1528588301474-23126537236b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200",
     accentImg: "https://images.unsplash.com/photo-1768742466928-7eb18e2fcb6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=900",
     color: "#1a1a1a",
@@ -46,8 +47,8 @@ export const campaigns = [
     tagline: "Where calm meets the abyss.",
     description:
       "FW24 explores the tension between city life and inner silence. Heavy fabrics, muted color, and the signature Toxic Society flame graphic printed across outerwear that's built for the coldest nights.",
-    heroImg: sweatshirtImg,
-    heroUnsplash: "https://images.unsplash.com/photo-1521142836214-9c7e52ec962c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1600",
+    heroImg: edgeImg,
+    heroUnsplash: edgeImg,
     editorialImg: "https://images.unsplash.com/photo-1595506832554-d3d3b715eff4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200",
     accentImg: "https://images.unsplash.com/photo-1734383524180-3c6f9b21e8e3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=900",
     color: "#C41E3A",

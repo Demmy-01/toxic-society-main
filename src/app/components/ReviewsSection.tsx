@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, CheckCircle, ChevronDown, ChevronUp, Edit3 } from "lucide-react";
+import { Star, CheckCircle, ChevronDown, ChevronUp, Edit3, Loader2 } from "lucide-react";
 import { useReviews } from "../context/ReviewsContext";
 
 interface ReviewsSectionProps {
@@ -71,7 +71,7 @@ function RatingBar({ label, count, total }: { label: string; count: number; tota
 }
 
 export function ReviewsSection({ productId, productName }: ReviewsSectionProps) {
-  const { getProductReviews, addReview, getAverageRating, getReviewCount } = useReviews();
+  const { getProductReviews, addReview, getAverageRating, getReviewCount, loading } = useReviews();
   const reviews = getProductReviews(productId);
   const average = getAverageRating(productId);
   const count = getReviewCount(productId);
@@ -86,6 +86,7 @@ export function ReviewsSection({ productId, productName }: ReviewsSectionProps) 
     title: "",
     body: "",
   });
+  const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -102,18 +103,31 @@ export function ReviewsSection({ productId, productName }: ReviewsSectionProps) 
 
   const displayed = showAll ? sortedReviews : sortedReviews.slice(0, 3);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.author.trim()) { setFormError("Please enter your name."); return; }
     if (form.rating === 0) { setFormError("Please select a rating."); return; }
     if (!form.title.trim()) { setFormError("Please enter a review title."); return; }
     if (!form.body.trim()) { setFormError("Please write your review."); return; }
     setFormError("");
-    addReview({ productId, ...form, verified: false });
+    setSaving(true);
+    await addReview({ productId, ...form, verified: false });
+    setSaving(false);
     setSubmitted(true);
     setForm({ author: "", rating: 0, title: "", body: "" });
     setTimeout(() => { setSubmitted(false); setShowForm(false); }, 3000);
   };
+
+  if (loading) {
+    return (
+      <div className="border-t border-gray-100 mt-16 pt-16">
+        <div className="flex items-center gap-3 py-12">
+          <Loader2 size={20} className="animate-spin text-gray-300" />
+          <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-400">Loading reviews...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="border-t border-gray-100 mt-16 pt-16">
@@ -246,10 +260,12 @@ export function ReviewsSection({ productId, productName }: ReviewsSectionProps) 
               <div className="flex gap-3">
                 <button
                   type="submit"
-                  style={{ backgroundColor: "#C41E3A", fontFamily: "'Bebas Neue', cursive", letterSpacing: "2px" }}
-                  className="px-8 py-3 text-white text-lg hover:bg-red-800 transition-colors"
+                  style={{ backgroundColor: saving ? "#999" : "#C41E3A", fontFamily: "'Bebas Neue', cursive", letterSpacing: "2px" }}
+                  className="px-8 py-3 text-white text-lg hover:bg-red-800 transition-colors flex items-center gap-2 disabled:opacity-60"
+                  disabled={saving}
                 >
-                  Submit Review
+                  {saving && <Loader2 size={14} className="animate-spin" />}
+                  {saving ? "Saving..." : "Submit Review"}
                 </button>
                 <button
                   type="button"

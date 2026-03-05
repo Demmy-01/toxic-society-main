@@ -31,13 +31,13 @@ export const PRODUCT_IMAGES = {
 // Fetch products from Supabase — call this in your pages
 export async function fetchProducts(): Promise<Product[]> {
   const { supabase } = await import('../../lib/supabase');
-  
+
   // Get all LIVE drops
   const { data: liveDrops } = await supabase
     .from('drops')
     .select('id, name, status')
     .eq('status', 'LIVE');
-  
+
   const liveDropIds = new Set(liveDrops?.map(d => d.id) ?? []);
 
   // Fetch ALL products that are in stock with their drop info
@@ -69,7 +69,7 @@ export async function fetchProducts(): Promise<Product[]> {
     drop: (p.drops as { name: string } | null)?.name || '',
     description: p.description || '',
     sizes: p.sizes || [],
-    tag: p.tag || undefined,
+    tag: p.tag || (liveDropIds.has(p.drop_id) ? "DROP" : undefined),
     inStock: p.in_stock ?? true,
   }));
 }

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router";
 import { fetchProducts } from "../data/products";
 import type { Product } from "../data/products";
 import { ProductCard } from "../components/ProductCard";
@@ -98,6 +99,7 @@ function SizeButton({
   );
 }
 
+
 export function Shop() {
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -110,6 +112,13 @@ export function Shop() {
     sizes: [],
     priceMax: FALLBACK_PRICE_MAX,
   });
+
+  const [searchParams] = useSearchParams();
+  const [searchText, setSearchText] = useState(searchParams.get("q") ?? "");
+
+  useEffect(() => {
+    setSearchText(searchParams.get("q") ?? "");
+  }, [searchParams]);
 
   useEffect(() => {
     fetchProducts().then((data) => {
@@ -151,8 +160,10 @@ export function Shop() {
     (filters.priceMax < maxProductPrice ? 1 : 0);
 
   const filtered = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
     return products
       .filter((p) => {
+        if (q && !p.name.toLowerCase().includes(q) && !p.category.toLowerCase().includes(q)) return false;
         if (filters.categories.length && !filters.categories.includes(p.category)) return false;
         if (filters.collections.length && !filters.collections.includes(p.collection)) return false;
         if (filters.drops.length && !filters.drops.includes(p.drop)) return false;
@@ -166,7 +177,7 @@ export function Shop() {
         if (sortBy === "newest") return b.id.localeCompare(a.id);
         return 0;
       });
-  }, [filters, sortBy, products]);
+  }, [filters, sortBy, products, searchText]);
 
   const FilterPanel = () => (
     <div className="flex flex-col h-full">
@@ -302,6 +313,27 @@ export function Shop() {
           {loading ? 'Loading...' : `${filtered.length} products`}
         </p>
       </div>
+
+      {/* Search query banner */}
+      {searchText.trim() && (
+        <div
+          style={{ backgroundColor: "#fdf2f2", borderColor: "#fecaca" }}
+          className="border-b px-4 py-3 flex items-center justify-between max-w-full"
+        >
+          <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-600">
+            Showing results for{" "}
+            <span style={{ color: "#C41E3A" }} className="font-semibold">"{searchText}"</span>
+            {" "}— {filtered.length} {filtered.length === 1 ? "product" : "products"} found
+          </p>
+          <button
+            onClick={() => setSearchText("")}
+            style={{ fontFamily: "'Inter', sans-serif", color: "#C41E3A" }}
+            className="text-xs uppercase tracking-widest flex items-center gap-1 hover:opacity-70 transition-opacity"
+          >
+            <X size={12} /> Clear
+          </button>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Top Bar */}

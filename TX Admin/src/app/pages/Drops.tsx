@@ -145,14 +145,14 @@ export default function Drops({ onLogout }: DropsProps) {
   return (
     <DashboardLayout title="Drops" onLogout={onLogout}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-xl md:text-2xl text-white mb-1">Drop Management</h1>
+          <h1 className="text-2xl text-white mb-1">Drop Management</h1>
           <p className="text-neutral-400 text-sm">Schedule and manage product drops with live countdowns</p>
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-[#dc2626] text-white rounded-xl hover:bg-[#b91c1c] transition-colors cursor-pointer self-start sm:self-auto"
+          className="flex items-center gap-2 px-4 py-2 bg-[#dc2626] text-white rounded-xl hover:bg-[#b91c1c] transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" /> New Drop
         </button>
@@ -181,7 +181,7 @@ export default function Drops({ onLogout }: DropsProps) {
       {!loading && drops.length > 0 && (
         <div className="space-y-4">
           {drops.map((drop) => (
-            <div key={drop.id} className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-4 md:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 sm:items-center hover:border-neutral-700 transition-all">
+            <div key={drop.id} className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-6 flex gap-6 items-center hover:border-neutral-700 transition-all">
               {/* Image */}
               <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-[#0f0f0f]">
                 {drop.image_url
@@ -228,7 +228,7 @@ export default function Drops({ onLogout }: DropsProps) {
       {/* ─── Add / Edit Modal ─── */}
       {showForm && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center overflow-y-auto p-4">
-          <div className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-5 md:p-8 max-w-xl w-full my-4 mx-2"
+          <div className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl p-8 max-w-xl w-full my-8"
                onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl text-white">{editId ? 'Edit Drop' : 'New Drop'}</h2>
@@ -239,7 +239,7 @@ export default function Drops({ onLogout }: DropsProps) {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Name + Label */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-neutral-300 mb-2">Drop Name *</label>
                   <input required value={form.name}
@@ -259,7 +259,7 @@ export default function Drops({ onLogout }: DropsProps) {
               </div>
 
               {/* Date display string + Status */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-neutral-300 mb-2">Display Date *</label>
                   <input required value={form.date}

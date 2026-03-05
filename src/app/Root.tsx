@@ -8,6 +8,8 @@ import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
 import { ReviewsProvider } from "./context/ReviewsContext";
 import { AuthProvider } from "../context/AuthContext";
+import { CurrencyProvider } from "./context/CurrencyContext";
+import { CurrencySelector } from "./components/CurrencySelector";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -20,22 +22,25 @@ function ScrollToTop() {
 export function Root() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <WishlistProvider>
-          <ReviewsProvider>
-            <ScrollToTop />
-            <div className="flex flex-col min-h-screen">
-              <Navbar />
-              <main className="flex-1">
-                <Outlet />
-              </main>
-              <Footer />
-              <CartDrawer />
-              <CheckoutModal />
-            </div>
-          </ReviewsProvider>
-        </WishlistProvider>
-      </CartProvider>
+      <CurrencyProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <ReviewsProvider>
+              <ScrollToTop />
+              <div className="flex flex-col min-h-screen">
+                <Navbar />
+                <main className="flex-1 pb-[66px] md:pb-0">
+                  <Outlet />
+                </main>
+                <Footer />
+                <CartDrawer />
+                <CheckoutModal />
+                <CurrencySelector />
+              </div>
+            </ReviewsProvider>
+          </WishlistProvider>
+        </CartProvider>
+      </CurrencyProvider>
     </AuthProvider>
   );
 }

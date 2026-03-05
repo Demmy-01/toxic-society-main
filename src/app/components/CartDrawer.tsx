@@ -2,10 +2,12 @@ import { X, Plus, Minus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { useCurrency } from "../context/CurrencyContext";
 
 export function CartDrawer() {
   const { items, removeItem, updateQuantity, totalPrice, isCartOpen, setIsCartOpen } = useCart();
   const { setShowCheckoutModal } = useAuth();
+  const { formatPrice } = useCurrency();
 
   if (!isCartOpen) return null;
 
@@ -113,7 +115,7 @@ export function CartDrawer() {
                         style={{ fontFamily: "'Inter', sans-serif" }}
                         className="text-sm text-gray-900"
                       >
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {formatPrice(item.price * item.quantity)}
                       </span>
                       <button
                         onClick={() => removeItem(item.id, item.size)}
@@ -143,7 +145,7 @@ export function CartDrawer() {
                 style={{ fontFamily: "'Inter', sans-serif" }}
                 className="text-base text-gray-900"
               >
-                ${totalPrice.toFixed(2)}
+                {formatPrice(totalPrice)}
               </span>
             </div>
             <p
@@ -157,7 +159,7 @@ export function CartDrawer() {
               style={{ backgroundColor: "#C41E3A", fontFamily: "'Bebas Neue', cursive", letterSpacing: "3px" }}
               className="w-full text-white py-3.5 text-lg hover:bg-red-800 transition-colors"
             >
-              Checkout — ${totalPrice.toFixed(2)}
+              Checkout — {formatPrice(totalPrice)}
             </button>
             <button
               onClick={() => setIsCartOpen(false)}
