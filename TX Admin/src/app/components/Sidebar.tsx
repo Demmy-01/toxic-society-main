@@ -5,13 +5,12 @@ import {
   Package, 
   Archive, 
   Percent, 
-  Mail, 
   BarChart3, 
   Settings,
-  Component,
   Zap,
   X,
-  LogOut
+  LogOut,
+  Users
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -23,14 +22,13 @@ interface SidebarProps {
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: ShoppingCart, label: 'Orders', path: '/orders' },
+  { icon: Users, label: 'Users', path: '/users' },
   { icon: Package, label: 'Products', path: '/products' },
   { icon: Zap, label: 'Drops', path: '/drops' },
   { icon: Archive, label: 'Inventory', path: '/inventory' },
   { icon: Percent, label: 'Discounts', path: '/discounts' },
-  { icon: Mail, label: 'Email Campaigns', path: '/email-campaigns' },
   { icon: BarChart3, label: 'Analytics', path: '/analytics' },
   { icon: Settings, label: 'Settings', path: '/settings' },
-  { icon: Component, label: 'Components', path: '/components' },
 ];
 
 export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {

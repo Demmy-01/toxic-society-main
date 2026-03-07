@@ -8,23 +8,20 @@ import Products from './pages/Products';
 import DropsAdmin from './pages/Drops';
 import Inventory from './pages/Inventory';
 import Discounts from './pages/Discounts';
-import EmailCampaigns from './pages/EmailCampaigns';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
-import ComponentsShowcase from './pages/ComponentsShowcase';
+import UsersAdmin from './pages/Users';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
       setLoading(false);
     });
 
-    // Listen for login / logout events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
     });
@@ -47,20 +44,16 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route
-          path="/login"
-          element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login onLogin={() => setIsAuthenticated(true)} />}
-        />
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login onLogin={() => setIsAuthenticated(true)} />} />
         <Route path="/dashboard" element={isAuthenticated ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/orders" element={isAuthenticated ? <Orders onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/products" element={isAuthenticated ? <Products onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/drops" element={isAuthenticated ? <DropsAdmin onLogout={handleLogout} /> : <Navigate to="/login" />} />
+        <Route path="/users" element={isAuthenticated ? <UsersAdmin onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/inventory" element={isAuthenticated ? <Inventory onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/discounts" element={isAuthenticated ? <Discounts onLogout={handleLogout} /> : <Navigate to="/login" />} />
-        <Route path="/email-campaigns" element={isAuthenticated ? <EmailCampaigns onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/analytics" element={isAuthenticated ? <Analytics onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/settings" element={isAuthenticated ? <Settings onLogout={handleLogout} /> : <Navigate to="/login" />} />
-        <Route path="/components" element={isAuthenticated ? <ComponentsShowcase onLogout={handleLogout} /> : <Navigate to="/login" />} />
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
