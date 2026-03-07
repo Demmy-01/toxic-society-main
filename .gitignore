@@ -2,13 +2,19 @@
 node_modules
 TX Admin/node_modules
 
-# Environment variables - NEVER commit these
+# Environment variables - NEVER commit these (OWASP A02)
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
+.env.development
 TX Admin/.env
 TX Admin/.env.local
 TX Admin/.env.*.local
+# Supabase local config may contain project refs / access tokens
+supabase/.env
+supabase/config.toml
 
 # Build output
 dist
@@ -16,4 +22,5 @@ TX Admin/dist
 
 # Misc
 .DS_Store
+Thumbs.db
 *.log

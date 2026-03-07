@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
-import { X, MapPin, Phone, Mail, User, ShoppingBag, CheckCircle, Loader2, Tag, XCircle } from 'lucide-react';
+import { X, MapPin, Phone, Mail, User, ShoppingBag, CheckCircle, Loader2, Tag, XCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { supabase } from '../../lib/supabase';
+// OWASP A03/A04: shared sanitization + validation utilities
+import { sanitizeString, isValidEmail, isValidPhone, isValidPromoCode, validateCheckoutForm, type CheckoutFormErrors } from '../../lib/validate';
 
 export function CheckoutModal() {
   const { user, customerProfile, signInWithGoogle, saveCustomerProfile, showCheckoutModal, setShowCheckoutModal } = useAuth();
   const { items, totalPrice, clearCart } = useCart();
 
   const [form, setForm] = useState({ name: '', phone: '', email: '', delivery_location: '' });
+  const [formErrors, setFormErrors] = useState<CheckoutFormErrors>({});
   const [step, setStep] = useState<'form' | 'placing' | 'confirmed'>('form');
   const [orderId, setOrderId] = useState('');
 
@@ -16,6 +19,9 @@ export function CheckoutModal() {
   const [promoInput, setPromoInput] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState('');
+  // OWASP A04: rate-limit promo attempts — max 5 per session to prevent DB enumeration
+  const [promoAttempts, setPromoAttempts] = useState(0);
+  const MAX_PROMO_ATTEMPTS = 5;
   const [appliedDiscount, setAppliedDiscount] = useState<{
     id: string; code: string; type: string; value: number;
   } | null>(null);
@@ -48,7 +54,9 @@ export function CheckoutModal() {
       setStep('form');
       setPromoInput('');
       setPromoError('');
+      setPromoAttempts(0); // reset rate-limit counter each session
       setAppliedDiscount(null);
+      setFormErrors({});
     }
   }, [showCheckoutModal]);
 
@@ -56,10 +64,23 @@ export function CheckoutModal() {
 
   // ─── Apply promo code ───────────────────────────────────────────
   const applyPromo = async () => {
-    const code = promoInput.trim().toUpperCase();
+    // OWASP A04: enforce per-session attempt limit before any DB call
+    if (promoAttempts >= MAX_PROMO_ATTEMPTS) {
+      setPromoError('Too many attempts. Please refresh and try again.');
+      return;
+    }
+
+    // OWASP A03: validate format before hitting the database
+    const code = sanitizeString(promoInput, 20).toUpperCase();
     if (!code) return;
+    if (!isValidPromoCode(code)) {
+      setPromoError('Invalid code format. Use letters, numbers, or dashes.');
+      return;
+    }
+
     setPromoLoading(true);
     setPromoError('');
+    setPromoAttempts(prev => prev + 1);
 
     const { data, error } = await supabase
       .from('discounts')
@@ -141,8 +162,15 @@ export function CheckoutModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await saveCustomerProfile(form);
-    await placeOrder(form);
+    // OWASP A03: validate + sanitize all form fields before any DB write
+    const { sanitized, errors } = validateCheckoutForm(form);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
+    await saveCustomerProfile(sanitized);
+    await placeOrder(sanitized);
   };
 
   const hasProfile = !!customerProfile && !!customerProfile.delivery_location;
@@ -334,40 +362,96 @@ export function CheckoutModal() {
                   <label style={{ fontFamily: "'Inter', sans-serif" }} className="block text-xs text-gray-500 uppercase tracking-widest mb-1.5">Full Name *</label>
                   <div className="relative">
                     <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input required value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                      placeholder="Your full name" style={{ fontFamily: "'Inter', sans-serif" }}
-                      className="w-full border border-gray-200 pl-9 pr-4 py-2.5 text-sm outline-none focus:border-red-700 transition-colors" />
+                    <input
+                      required
+                      type="text"
+                      value={form.name}
+                      onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                      placeholder="Your full name"
+                      maxLength={100}
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors ${
+                        formErrors.name ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'
+                      }`}
+                    />
                   </div>
+                  {formErrors.name && (
+                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1">
+                      <AlertCircle size={11} />{formErrors.name}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label style={{ fontFamily: "'Inter', sans-serif" }} className="block text-xs text-gray-500 uppercase tracking-widest mb-1.5">Email *</label>
                   <div className="relative">
                     <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input required type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                      placeholder="your@email.com" style={{ fontFamily: "'Inter', sans-serif" }}
-                      className="w-full border border-gray-200 pl-9 pr-4 py-2.5 text-sm outline-none focus:border-red-700 transition-colors" />
+                    <input
+                      required
+                      type="email"
+                      value={form.email}
+                      onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                      placeholder="your@email.com"
+                      maxLength={254}
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors ${
+                        formErrors.email ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'
+                      }`}
+                    />
                   </div>
+                  {formErrors.email && (
+                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1">
+                      <AlertCircle size={11} />{formErrors.email}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label style={{ fontFamily: "'Inter', sans-serif" }} className="block text-xs text-gray-500 uppercase tracking-widest mb-1.5">Phone *</label>
                   <div className="relative">
                     <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input required type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-                      placeholder="+234 800 000 0000" style={{ fontFamily: "'Inter', sans-serif" }}
-                      className="w-full border border-gray-200 pl-9 pr-4 py-2.5 text-sm outline-none focus:border-red-700 transition-colors" />
+                    <input
+                      required
+                      type="tel"
+                      value={form.phone}
+                      onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+                      placeholder="+234 800 000 0000"
+                      maxLength={20}
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors ${
+                        formErrors.phone ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'
+                      }`}
+                    />
                   </div>
+                  {formErrors.phone && (
+                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1">
+                      <AlertCircle size={11} />{formErrors.phone}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label style={{ fontFamily: "'Inter', sans-serif" }} className="block text-xs text-gray-500 uppercase tracking-widest mb-1.5">Delivery Address *</label>
                   <div className="relative">
                     <MapPin size={15} className="absolute left-3 top-3 text-gray-400" />
-                    <textarea required rows={3} value={form.delivery_location} onChange={e => setForm(p => ({ ...p, delivery_location: e.target.value }))}
-                      placeholder="Full delivery address..." style={{ fontFamily: "'Inter', sans-serif" }}
-                      className="w-full border border-gray-200 pl-9 pr-4 py-2.5 text-sm outline-none focus:border-red-700 transition-colors resize-none" />
+                    <textarea
+                      required
+                      rows={3}
+                      value={form.delivery_location}
+                      onChange={e => setForm(p => ({ ...p, delivery_location: e.target.value }))}
+                      placeholder="Full delivery address..."
+                      maxLength={300}
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors resize-none ${
+                        formErrors.delivery_location ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'
+                      }`}
+                    />
                   </div>
+                  {formErrors.delivery_location && (
+                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1">
+                      <AlertCircle size={11} />{formErrors.delivery_location}
+                    </p>
+                  )}
                 </div>
 
                 <PromoSection />
