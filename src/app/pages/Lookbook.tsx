@@ -5,6 +5,8 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import flamImg from "../../assets/ts-tshirt-2.jpeg";
 import metalImg from "../../assets/86aeade7262b02c7fbb79d4cb1ce30e8984bff4e.png";
 import edgeImg from "../../assets/sweatshirt.png";
+import edgeEditorialImg from "../../assets/ts-1.jpeg";
+import edgeAccentImg from "../../assets/ts-2.jpeg";
 
 export const campaigns = [
   {
@@ -49,8 +51,8 @@ export const campaigns = [
       "FW24 explores the tension between city life and inner silence. Heavy fabrics, muted color, and the signature Toxic Society flame graphic printed across outerwear that's built for the coldest nights.",
     heroImg: edgeImg,
     heroUnsplash: edgeImg,
-    editorialImg: "https://images.unsplash.com/photo-1595506832554-d3d3b715eff4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200",
-    accentImg: "https://images.unsplash.com/photo-1734383524180-3c6f9b21e8e3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=900",
+    editorialImg: edgeEditorialImg,
+    accentImg: edgeAccentImg,
     color: "#C41E3A",
     products: [4, 5, 6],
     featured: false,
