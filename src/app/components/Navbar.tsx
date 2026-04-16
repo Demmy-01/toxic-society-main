@@ -13,18 +13,29 @@ import {
   Zap,
   Info,
   Clock,
+  User,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
+import { useAuth } from "../../context/AuthContext";
 
 export function Navbar() {
   const { totalItems, setIsCartOpen } = useCart();
   const { totalItems: wishlistCount } = useWishlist();
+  const { user, signInWithGoogle } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+
+  const handleAccountClick = () => {
+    if (!user) {
+      signInWithGoogle();
+    } else {
+      navigate("/account");
+    }
+  };
 
   const handleSearch = () => {
     const q = searchQuery.trim();
@@ -172,6 +183,13 @@ export function Navbar() {
                   )}
                 </Link>
                 <button
+                  className="text-gray-800 hover:text-red-700 transition-colors"
+                  onClick={handleAccountClick}
+                  title="Account"
+                >
+                  <User size={19} />
+                </button>
+                <button
                   className="relative text-gray-800 hover:text-red-700 transition-colors"
                   onClick={() => setIsCartOpen(true)}
                 >
@@ -227,6 +245,13 @@ export function Navbar() {
                 onClick={() => setSearchOpen(!searchOpen)}
               >
                 <Search size={19} />
+              </button>
+              <button
+                className="text-gray-800 hover:text-red-700 transition-colors"
+                onClick={handleAccountClick}
+                title="Account"
+              >
+                <User size={19} />
               </button>
               <button
                 className="relative text-gray-800 hover:text-red-700 transition-colors"

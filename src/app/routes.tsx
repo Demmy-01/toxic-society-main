@@ -9,6 +9,7 @@ import { About } from "./pages/About";
 import { Drops } from "./pages/Drops";
 import { Wishlist } from "./pages/Wishlist";
 import { History } from "./pages/History";
+import { Account } from "./pages/Account";
 import { NotFound } from "./pages/NotFound";
 
 export const router = createBrowserRouter([
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: "drops", Component: Drops },
       { path: "wishlist", Component: Wishlist },
       { path: "history", Component: History },
+      { path: "account", Component: Account },
       { path: "about", Component: About },
       { path: "*", Component: NotFound },
     ],
