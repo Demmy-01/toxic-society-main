@@ -12,6 +12,7 @@ export function Account() {
     signOut,
     signInWithGoogle,
     loading: authLoading,
+    setShowCheckoutModal,
   } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -23,22 +24,32 @@ export function Account() {
     delivery_location: "",
   });
 
-  // Initialize form with customer profile data
+  // Initialize form with customer profile data and auto-enable edit mode if no profile exists
   useEffect(() => {
-    if (customerProfile) {
-      setFormData({
-        name: customerProfile.name || "",
-        email: customerProfile.email || "",
-        phone: customerProfile.phone || "",
-        delivery_location: customerProfile.delivery_location || "",
-      });
-    } else if (user?.email) {
-      setFormData((prev) => ({
-        ...prev,
-        email: user.email || "",
-      }));
+    if (user && !authLoading) {
+      // Close any open checkout modal
+      setShowCheckoutModal(false);
+
+      if (customerProfile) {
+        setFormData({
+          name: customerProfile.name || "",
+          email: customerProfile.email || "",
+          phone: customerProfile.phone || "",
+          delivery_location: customerProfile.delivery_location || "",
+        });
+        setIsEditing(false);
+      } else {
+        // If user just signed in but has no profile, auto-enable edit mode
+        setFormData({
+          name: "",
+          email: user.email || "",
+          phone: "",
+          delivery_location: "",
+        });
+        setIsEditing(true);
+      }
     }
-  }, [customerProfile, user]);
+  }, [user, customerProfile, authLoading, setShowCheckoutModal]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
