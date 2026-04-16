@@ -37,6 +37,7 @@ export function Navbar() {
   const leftLinks = [
     { label: "HOME", to: "/" },
     { label: "SHOP", to: "/shop" },
+    { label: "HISTORY", to: "/history" },
   ];
 
   const rightLinks = [
