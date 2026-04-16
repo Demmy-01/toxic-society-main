@@ -1,19 +1,82 @@
-import { useState, useEffect } from 'react';
-import { X, MapPin, Phone, Mail, User, ShoppingBag, CheckCircle, Loader2, Tag, XCircle, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, MapPin, Phone, Mail, User, ShoppingBag, CheckCircle, Loader2, Tag, XCircle, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
 import { supabase } from '../../lib/supabase';
 // OWASP A03/A04: shared sanitization + validation utilities
 import { sanitizeString, isValidEmail, isValidPhone, isValidPromoCode, validateCheckoutForm, type CheckoutFormErrors } from '../../lib/validate';
 
+// ─── Paystack inline JS types ─────────────────────────────────────────────────
+// The public key is safe to use on the client. It only opens the payment popup.
+// All verification (using the secret key) happens in the Supabase edge function.
+declare global {
+  interface Window {
+    PaystackPop: {
+      setup(options: PaystackOptions): { openIframe(): void };
+    };
+  }
+}
+
+interface PaystackOptions {
+  key: string;
+  email: string;
+  amount: number;       // in kobo (NGN × 100) or subunit of chosen currency
+  currency: string;
+  ref: string;
+  label?: string;
+  callback: (response: { reference: string }) => void;
+  onClose: () => void;
+}
+
+// ─── API endpoint (Vercel serverless function) ───────────────────────────────
+// Works locally with `vercel dev`, and automatically in Vercel production.
+// The SECRET key never appears here — it lives in process.env on the server.
+const VERIFY_FN_URL = '/api/verify-payment';
+// Public key — intentionally client-side (Paystack requires it for the popup)
+const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string;
+
+// ─── Generate a unique payment reference ─────────────────────────────────────
+function generateRef(): string {
+  const ts = Date.now().toString(36).toUpperCase();
+  const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `TS_${ts}_${rand}`;
+}
+
+// ─── Load Paystack inline script ──────────────────────────────────────────────
+function usePaystackScript(): boolean {
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (window.PaystackPop) { setLoaded(true); return; }
+    const existing = document.getElementById('paystack-inline');
+    if (existing) {
+      existing.addEventListener('load', () => setLoaded(true));
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = 'paystack-inline';
+    script.src = 'https://js.paystack.co/v1/inline.js';
+    script.async = true;
+    script.onload = () => setLoaded(true);
+    document.head.appendChild(script);
+  }, []);
+
+  return loaded;
+}
+
 export function CheckoutModal() {
   const { user, customerProfile, signInWithGoogle, saveCustomerProfile, showCheckoutModal, setShowCheckoutModal } = useAuth();
   const { items, totalPrice, clearCart } = useCart();
+  const { currency, formatPrice, ratesLoading } = useCurrency();
+
+  const paystackReady = usePaystackScript();
 
   const [form, setForm] = useState({ name: '', phone: '', email: '', delivery_location: '' });
   const [formErrors, setFormErrors] = useState<CheckoutFormErrors>({});
-  const [step, setStep] = useState<'form' | 'placing' | 'confirmed'>('form');
+  const [step, setStep] = useState<'form' | 'paying' | 'verifying' | 'confirmed' | 'failed'>('form');
   const [orderId, setOrderId] = useState('');
+  const [payError, setPayError] = useState('');
 
   // Discount
   const [promoInput, setPromoInput] = useState('');
@@ -32,7 +95,12 @@ export function CheckoutModal() {
     if (appliedDiscount.type === 'percentage') return (totalPrice * appliedDiscount.value) / 100;
     return Math.min(appliedDiscount.value, totalPrice);
   })();
-  const finalTotal = Math.max(0, totalPrice - discountAmount);
+  const finalTotalUsd = Math.max(0, totalPrice - discountAmount);
+
+  // Convert to the user's selected currency for payment
+  const finalTotalInCurrency = finalTotalUsd * currency.rate;
+  // Paystack needs amount in smallest currency subunit (kobo for NGN, cents for USD, etc.)
+  const amountInSubunit = Math.round(finalTotalInCurrency * 100);
 
   // Auto-populate form from saved profile
   useEffect(() => {
@@ -54,23 +122,21 @@ export function CheckoutModal() {
       setStep('form');
       setPromoInput('');
       setPromoError('');
-      setPromoAttempts(0); // reset rate-limit counter each session
+      setPromoAttempts(0);
       setAppliedDiscount(null);
       setFormErrors({});
+      setPayError('');
     }
   }, [showCheckoutModal]);
 
   if (!showCheckoutModal) return null;
 
-  // ─── Apply promo code ───────────────────────────────────────────
+  // ─── Apply promo code ───────────────────────────────────────────────────────
   const applyPromo = async () => {
-    // OWASP A04: enforce per-session attempt limit before any DB call
     if (promoAttempts >= MAX_PROMO_ATTEMPTS) {
       setPromoError('Too many attempts. Please refresh and try again.');
       return;
     }
-
-    // OWASP A03: validate format before hitting the database
     const code = sanitizeString(promoInput, 20).toUpperCase();
     if (!code) return;
     if (!isValidPromoCode(code)) {
@@ -108,9 +174,10 @@ export function CheckoutModal() {
     setPromoError('');
   };
 
-  // ─── Place order ─────────────────────────────────────────────────
-  const placeOrder = async (profile: typeof form) => {
-    setStep('placing');
+  // ─── Verify payment & save order (calls server-side API function) ────────────
+  const verifyAndSaveOrder = async (reference: string, profile: typeof form) => {
+    setStep('verifying');
+    setPayError('');
 
     try {
       const orderItems = items.map(item => ({
@@ -118,51 +185,82 @@ export function CheckoutModal() {
         quantity: item.quantity, size: item.size, image: item.image,
       }));
 
-      // Build insert payload — try with discount columns first
-      const payload: Record<string, unknown> = {
-        items: orderItems,
-        total: finalTotal,
-        status: 'paid',
-        customer_id: customerProfile?.id ?? null,
-        discount_code: appliedDiscount?.code ?? null,
-        discount_amount: discountAmount > 0 ? discountAmount : 0,
-      };
+      // Fetch the current user session token to bypass RLS errors on the server
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
 
-      let result = await supabase.from('orders').insert(payload).select('id').single();
+      const res = await fetch(VERIFY_FN_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          reference,
+          orderData: {
+            items: orderItems,
+            totalUsd: finalTotalUsd,
+            customerId: customerProfile?.id ?? null,
+            discountCode: appliedDiscount?.code ?? null,
+            discountAmount: discountAmount > 0 ? discountAmount : 0,
+            discountId: appliedDiscount?.id ?? null,
+          },
+        }),
+      });
 
-      // If insert failed (e.g. columns don't exist yet), retry without discount columns
-      if (result.error) {
-        const { discount_code: _dc, discount_amount: _da, ...fallbackPayload } = payload;
-        result = await supabase.from('orders').insert(fallbackPayload).select('id').single();
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        throw new Error(result.error ?? 'Payment verification failed.');
       }
 
-      if (!result.error && result.data) setOrderId(result.data.id);
-
-      // Increment discount uses — safe select+update (no RPC needed)
-      if (appliedDiscount) {
-        const { data: discRow } = await supabase
-          .from('discounts')
-          .select('uses')
-          .eq('id', appliedDiscount.id)
-          .single();
-        if (discRow) {
-          await supabase
-            .from('discounts')
-            .update({ uses: (discRow.uses ?? 0) + 1 })
-            .eq('id', appliedDiscount.id);
-        }
-      }
-    } catch (_err) {
-      // Absorb any unexpected errors — we still want to clear cart and confirm
-    } finally {
+      if (result.orderId) setOrderId(result.orderId);
       clearCart();
       setStep('confirmed');
+
+    } catch (err: unknown) {
+      console.error('verifyAndSaveOrder error:', err);
+      setPayError(err instanceof Error ? err.message : 'Something went wrong. Contact support with your payment reference.');
+      setStep('failed');
     }
   };
 
+  // ─── Open Paystack popup ──────────────────────────────────────────────────
+  const initiatePayment = (profile: typeof form) => {
+    if (!paystackReady || !window.PaystackPop) {
+      setPayError('Payment system is still loading. Please try again.');
+      return;
+    }
+
+    setStep('paying');
+    setPayError('');
+
+    const ref = generateRef();
+
+    const handler = window.PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,        // public key — safe on client
+      email: profile.email,
+      amount: amountInSubunit,          // in kobo/subunit
+      currency: currency.code,          // NGN, USD, EUR, GBP
+      ref,
+      label: `Toxic Society Order`,
+      callback: (response) => {
+        // Payment popup closed with success — now verify server-side
+        verifyAndSaveOrder(response.reference, profile);
+      },
+      onClose: () => {
+        // User dismissed the popup without paying
+        setStep('form');
+        setPayError('');
+      },
+    });
+
+    handler.openIframe();
+  };
+
+  // ─── Form submit (new user) ───────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // OWASP A03: validate + sanitize all form fields before any DB write
     const { sanitized, errors } = validateCheckoutForm(form);
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -170,12 +268,18 @@ export function CheckoutModal() {
     }
     setFormErrors({});
     await saveCustomerProfile(sanitized);
-    await placeOrder(sanitized);
+    initiatePayment(sanitized);
+  };
+
+  // ─── Returning user — directly pay ───────────────────────────────────────
+  const handleReturnUserPay = () => {
+    initiatePayment(form);
   };
 
   const hasProfile = !!customerProfile && !!customerProfile.delivery_location;
+  const isProcessing = step === 'paying' || step === 'verifying';
 
-  // ─── Promo code section (shared by both form states) ──────────────
+  // ─── Promo code section ──────────────────────────────────────────────────
   const PromoSection = () => (
     <div className="border border-dashed border-gray-200 rounded-lg p-3">
       {appliedDiscount ? (
@@ -228,12 +332,12 @@ export function CheckoutModal() {
     </div>
   );
 
-  // ─── Price summary (shows discount breakdown) ─────────────────────
+  // ─── Price summary ──────────────────────────────────────────────────────
   const PriceSummary = () => (
     <div className="p-3 bg-gray-50 rounded-lg space-y-1.5">
       <div className="flex justify-between">
         <span style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-500">Subtotal</span>
-        <span style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-700">${totalPrice.toFixed(2)}</span>
+        <span style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-700">{formatPrice(totalPrice)}</span>
       </div>
       {appliedDiscount && discountAmount > 0 && (
         <div className="flex justify-between">
@@ -241,17 +345,35 @@ export function CheckoutModal() {
             Discount ({appliedDiscount.code})
           </span>
           <span style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-green-600">
-            −${discountAmount.toFixed(2)}
+            −{formatPrice(discountAmount)}
           </span>
         </div>
       )}
       <div className="border-t border-gray-200 pt-1.5 flex justify-between">
         <span style={{ fontFamily: "'Inter', sans-serif", color: '#C41E3A' }} className="text-sm font-semibold">Total</span>
         <span style={{ fontFamily: "'Inter', sans-serif", color: '#C41E3A' }} className="text-base font-bold">
-          ${finalTotal.toFixed(2)}
+          {ratesLoading ? '...' : formatPrice(finalTotalUsd)}
         </span>
       </div>
     </div>
+  );
+
+  // ─── Paystack Pay button shared component ────────────────────────────────
+  const PayButton = ({ onClick, type = 'button' }: { onClick?: () => void; type?: 'button' | 'submit' }) => (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={isProcessing || !paystackReady}
+      style={{ backgroundColor: '#C41E3A', fontFamily: "'Bebas Neue', cursive", letterSpacing: '3px' }}
+      className="w-full text-white py-4 text-lg transition-all cursor-pointer hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+    >
+      {isProcessing ? (
+        <Loader2 size={18} className="animate-spin" />
+      ) : (
+        <ShieldCheck size={18} />
+      )}
+      {isProcessing ? 'Processing...' : `Pay ${ratesLoading ? '...' : formatPrice(finalTotalUsd)}`}
+    </button>
   );
 
   return (
@@ -259,7 +381,7 @@ export function CheckoutModal() {
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
-        onClick={() => step !== 'placing' && setShowCheckoutModal(false)}
+        onClick={() => !isProcessing && setShowCheckoutModal(false)}
       />
 
       {/* Modal */}
@@ -275,23 +397,23 @@ export function CheckoutModal() {
                 {!user ? 'Continue to Checkout' : step === 'confirmed' ? 'Order Confirmed' : 'Delivery Details'}
               </span>
             </div>
-            {step !== 'placing' && (
+            {!isProcessing && step !== 'confirmed' && (
               <button onClick={() => setShowCheckoutModal(false)} className="text-gray-400 hover:text-gray-700 cursor-pointer">
                 <X size={20} />
               </button>
             )}
           </div>
 
-          {/* Item count strip (not on confirmed) */}
-          {step !== 'confirmed' && (
+          {/* Item count strip */}
+          {step !== 'confirmed' && step !== 'verifying' && (
             <div className="px-6 py-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
               <span style={{ fontFamily: "'Inter', sans-serif" }} className="text-xs text-gray-500">
                 {items.length} item{items.length !== 1 ? 's' : ''}
               </span>
               <span style={{ fontFamily: "'Inter', sans-serif", color: '#C41E3A' }} className="text-base font-semibold">
-                ${finalTotal.toFixed(2)}
+                {formatPrice(finalTotalUsd)}
                 {appliedDiscount && discountAmount > 0 && (
-                  <span className="ml-1 text-xs line-through text-gray-400">${totalPrice.toFixed(2)}</span>
+                  <span className="ml-1 text-xs line-through text-gray-400">{formatPrice(totalPrice)}</span>
                 )}
               </span>
             </div>
@@ -343,11 +465,13 @@ export function CheckoutModal() {
                 <PromoSection />
                 <PriceSummary />
 
-                <button onClick={() => placeOrder(form)}
-                  style={{ backgroundColor: '#C41E3A', fontFamily: "'Bebas Neue', cursive", letterSpacing: '3px' }}
-                  className="w-full text-white py-4 text-lg transition-all cursor-pointer hover:opacity-90">
-                  Place Order — ${finalTotal.toFixed(2)}
-                </button>
+                <PayButton onClick={handleReturnUserPay} />
+
+                {/* Paystack branding */}
+                <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-center text-xs text-gray-400 flex items-center justify-center gap-1.5">
+                  <ShieldCheck size={12} />
+                  Secured by Paystack
+                </p>
               </div>
             )}
 
@@ -370,15 +494,11 @@ export function CheckoutModal() {
                       placeholder="Your full name"
                       maxLength={100}
                       style={{ fontFamily: "'Inter', sans-serif" }}
-                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors ${
-                        formErrors.name ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'
-                      }`}
+                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors ${formErrors.name ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'}`}
                     />
                   </div>
                   {formErrors.name && (
-                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1">
-                      <AlertCircle size={11} />{formErrors.name}
-                    </p>
+                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1"><AlertCircle size={11} />{formErrors.name}</p>
                   )}
                 </div>
 
@@ -394,15 +514,11 @@ export function CheckoutModal() {
                       placeholder="your@email.com"
                       maxLength={254}
                       style={{ fontFamily: "'Inter', sans-serif" }}
-                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors ${
-                        formErrors.email ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'
-                      }`}
+                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors ${formErrors.email ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'}`}
                     />
                   </div>
                   {formErrors.email && (
-                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1">
-                      <AlertCircle size={11} />{formErrors.email}
-                    </p>
+                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1"><AlertCircle size={11} />{formErrors.email}</p>
                   )}
                 </div>
 
@@ -418,15 +534,11 @@ export function CheckoutModal() {
                       placeholder="+234 800 000 0000"
                       maxLength={20}
                       style={{ fontFamily: "'Inter', sans-serif" }}
-                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors ${
-                        formErrors.phone ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'
-                      }`}
+                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors ${formErrors.phone ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'}`}
                     />
                   </div>
                   {formErrors.phone && (
-                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1">
-                      <AlertCircle size={11} />{formErrors.phone}
-                    </p>
+                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1"><AlertCircle size={11} />{formErrors.phone}</p>
                   )}
                 </div>
 
@@ -442,37 +554,49 @@ export function CheckoutModal() {
                       placeholder="Full delivery address..."
                       maxLength={300}
                       style={{ fontFamily: "'Inter', sans-serif" }}
-                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors resize-none ${
-                        formErrors.delivery_location ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'
-                      }`}
+                      className={`w-full border pl-9 pr-4 py-2.5 text-sm outline-none transition-colors resize-none ${formErrors.delivery_location ? 'border-red-400 focus:border-red-700' : 'border-gray-200 focus:border-red-700'}`}
                     />
                   </div>
                   {formErrors.delivery_location && (
-                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1">
-                      <AlertCircle size={11} />{formErrors.delivery_location}
-                    </p>
+                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1"><AlertCircle size={11} />{formErrors.delivery_location}</p>
                   )}
                 </div>
 
                 <PromoSection />
                 <PriceSummary />
 
-                <button type="submit"
-                  style={{ backgroundColor: '#C41E3A', fontFamily: "'Bebas Neue', cursive", letterSpacing: '3px' }}
-                  className="w-full text-white py-4 text-lg transition-all cursor-pointer hover:opacity-90">
-                  Place Order — ${finalTotal.toFixed(2)}
-                </button>
+                <PayButton type="submit" />
+
+                <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-center text-xs text-gray-400 flex items-center justify-center gap-1.5">
+                  <ShieldCheck size={12} />
+                  Secured by Paystack
+                </p>
               </form>
             )}
 
-            {/* ─── Placing ─── */}
-            {step === 'placing' && (
+            {/* ─── Paying (Paystack popup is open) ─── */}
+            {step === 'paying' && (
               <div className="flex flex-col items-center text-center gap-4 py-8">
                 <Loader2 size={40} className="animate-spin" style={{ color: '#C41E3A' }} />
                 <p style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: '2px' }} className="text-xl text-gray-900">
-                  Placing your order...
+                  Complete payment in the Paystack popup
                 </p>
-                <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-400">Please wait a moment</p>
+                <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-400">
+                  A secure Paystack payment window has opened. Complete your payment there.
+                </p>
+              </div>
+            )}
+
+            {/* ─── Verifying ─── */}
+            {step === 'verifying' && (
+              <div className="flex flex-col items-center text-center gap-4 py-8">
+                <Loader2 size={40} className="animate-spin" style={{ color: '#C41E3A' }} />
+                <p style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: '2px' }} className="text-xl text-gray-900">
+                  Confirming your payment...
+                </p>
+                <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-400">
+                  Please wait while we verify your transaction
+                </p>
               </div>
             )}
 
@@ -485,11 +609,11 @@ export function CheckoutModal() {
                     Order Placed!
                   </p>
                   <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-400">
-                    Thank you for your order. We'll contact you shortly to confirm delivery.
+                    Payment confirmed. We'll contact you shortly to confirm delivery.
                   </p>
                   {discountAmount > 0 && (
                     <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-green-600 mt-1">
-                      You saved ${discountAmount.toFixed(2)}! 🎉
+                      You saved {formatPrice(discountAmount)}! 🎉
                     </p>
                   )}
                   {orderId && (
@@ -503,6 +627,37 @@ export function CheckoutModal() {
                   className="w-full text-white py-4 text-lg cursor-pointer hover:opacity-90 mt-2">
                   Continue Shopping
                 </button>
+              </div>
+            )}
+
+            {/* ─── Payment failed ─── */}
+            {step === 'failed' && (
+              <div className="flex flex-col items-center text-center gap-4 py-6">
+                <AlertCircle size={56} className="text-red-500" />
+                <div>
+                  <p style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: '2px' }} className="text-2xl text-gray-900 mb-2">
+                    Payment Issue
+                  </p>
+                  <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-sm text-gray-500">
+                    {payError || 'Something went wrong verifying your payment.'}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 w-full">
+                  <button
+                    onClick={() => setStep('form')}
+                    style={{ backgroundColor: '#C41E3A', fontFamily: "'Bebas Neue', cursive", letterSpacing: '3px' }}
+                    className="w-full text-white py-4 text-lg cursor-pointer hover:opacity-90"
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    onClick={() => setShowCheckoutModal(false)}
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                    className="w-full text-xs text-gray-400 uppercase tracking-widest py-2 hover:text-gray-700 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             )}
 

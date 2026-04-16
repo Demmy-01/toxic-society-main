@@ -8,6 +8,7 @@ import { LookbookCampaign } from "./pages/LookbookCampaign";
 import { About } from "./pages/About";
 import { Drops } from "./pages/Drops";
 import { Wishlist } from "./pages/Wishlist";
+import { History } from "./pages/History";
 import { NotFound } from "./pages/NotFound";
 
 export const router = createBrowserRouter([
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
       { path: "lookbook/:slug", Component: LookbookCampaign },
       { path: "drops", Component: Drops },
       { path: "wishlist", Component: Wishlist },
+      { path: "history", Component: History },
       { path: "about", Component: About },
       { path: "*", Component: NotFound },
     ],

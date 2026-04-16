@@ -2,8 +2,17 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import logoNoBg from "../../assets/logo-no-bg.png";
 import {
-  ShoppingBag, Menu, X, Search, Heart,
-  Home, Store, BookOpen, Zap, Info,
+  ShoppingBag,
+  Menu,
+  X,
+  Search,
+  Heart,
+  Home,
+  Store,
+  BookOpen,
+  Zap,
+  Info,
+  Clock,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
@@ -44,20 +53,26 @@ export function Navbar() {
 
   // Bottom nav tabs
   const bottomNavItems = [
-    { label: "Home",     to: "/",         icon: Home },
-    { label: "Shop",     to: "/shop",     icon: Store },
+    { label: "Home", to: "/", icon: Home },
+    { label: "Shop", to: "/shop", icon: Store },
     { label: "Wishlist", to: "/wishlist", icon: Heart },
+    { label: "History", to: "/history", icon: Clock },
     { label: "Lookbook", to: "/lookbook", icon: BookOpen },
   ];
 
   const isActive = (path: string) =>
-    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+    path === "/"
+      ? location.pathname === "/"
+      : location.pathname.startsWith(path);
 
   return (
     <>
       {/* ── Announcement bar ── */}
       <div
-        style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
+        style={{
+          backgroundColor: "#C41E3A",
+          fontFamily: "'Inter', sans-serif",
+        }}
         className="text-white text-center py-2 text-xs tracking-widest uppercase"
       >
         Free shipping on orders over $200 &nbsp;·&nbsp; New drop available now
@@ -69,7 +84,6 @@ export function Navbar() {
         style={{ boxShadow: "0 1px 20px rgba(0,0,0,0.06)" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
           {/* Desktop 3-column */}
           <div className="hidden md:grid grid-cols-3 items-center h-16">
             {/* Left */}
@@ -81,7 +95,9 @@ export function Navbar() {
                   style={{
                     fontFamily: "'Inter', sans-serif",
                     color: isActive(link.to) ? "#C41E3A" : "#1a1a1a",
-                    borderBottom: isActive(link.to) ? "2px solid #C41E3A" : "2px solid transparent",
+                    borderBottom: isActive(link.to)
+                      ? "2px solid #C41E3A"
+                      : "2px solid transparent",
                   }}
                   className="text-xs tracking-widest uppercase pb-1 transition-all duration-200 hover:text-red-700 whitespace-nowrap"
                 >
@@ -94,11 +110,18 @@ export function Navbar() {
             <div className="flex justify-center">
               <Link to="/">
                 <div
-                  style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "4px" }}
+                  style={{
+                    fontFamily: "'Bebas Neue', cursive",
+                    letterSpacing: "4px",
+                  }}
                   className="flex items-center text-2xl text-gray-900 select-none whitespace-nowrap"
                 >
                   <span style={{ color: "#C41E3A" }}>TOXIC</span>
-                  <img src={logoNoBg} alt="Toxic Society" className="h-9 w-auto mx-1" />
+                  <img
+                    src={logoNoBg}
+                    alt="Toxic Society"
+                    className="h-9 w-auto mx-1"
+                  />
                   <span className="text-gray-900">SOCIETY</span>
                 </div>
               </Link>
@@ -113,7 +136,9 @@ export function Navbar() {
                   style={{
                     fontFamily: "'Inter', sans-serif",
                     color: isActive(link.to) ? "#C41E3A" : "#1a1a1a",
-                    borderBottom: isActive(link.to) ? "2px solid #C41E3A" : "2px solid transparent",
+                    borderBottom: isActive(link.to)
+                      ? "2px solid #C41E3A"
+                      : "2px solid transparent",
                   }}
                   className="text-xs tracking-widest uppercase pb-1 transition-all duration-200 hover:text-red-700 whitespace-nowrap"
                 >
@@ -121,21 +146,43 @@ export function Navbar() {
                 </Link>
               ))}
               <div className="flex items-center gap-4 ml-1">
-                <button className="text-gray-800 hover:text-red-700 transition-colors" onClick={() => setSearchOpen(!searchOpen)}>
+                <button
+                  className="text-gray-800 hover:text-red-700 transition-colors"
+                  onClick={() => setSearchOpen(!searchOpen)}
+                >
                   <Search size={19} />
                 </button>
-                <Link to="/wishlist" className="relative text-gray-800 hover:text-red-700 transition-colors" title="Wishlist">
+                <Link
+                  to="/wishlist"
+                  className="relative text-gray-800 hover:text-red-700 transition-colors"
+                  title="Wishlist"
+                >
                   <Heart size={19} />
                   {wishlistCount > 0 && (
-                    <span style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }} className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                    <span
+                      style={{
+                        backgroundColor: "#C41E3A",
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                      className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center"
+                    >
                       {wishlistCount}
                     </span>
                   )}
                 </Link>
-                <button className="relative text-gray-800 hover:text-red-700 transition-colors" onClick={() => setIsCartOpen(true)}>
+                <button
+                  className="relative text-gray-800 hover:text-red-700 transition-colors"
+                  onClick={() => setIsCartOpen(true)}
+                >
                   <ShoppingBag size={19} />
                   {totalItems > 0 && (
-                    <span style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }} className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                    <span
+                      style={{
+                        backgroundColor: "#C41E3A",
+                        fontFamily: "'Inter', sans-serif",
+                      }}
+                      className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center"
+                    >
                       {totalItems}
                     </span>
                   )}
@@ -147,34 +194,58 @@ export function Navbar() {
           {/* Mobile top bar */}
           <div className="md:hidden flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <button className="text-gray-800" onClick={() => setMenuOpen(!menuOpen)}>
+              <button
+                className="text-gray-800"
+                onClick={() => setMenuOpen(!menuOpen)}
+              >
                 {menuOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
               <Link to="/">
-                <img src={logoNoBg} alt="Toxic Society" className="h-10 w-auto" />
+                <img
+                  src={logoNoBg}
+                  alt="Toxic Society"
+                  className="h-10 w-auto"
+                />
               </Link>
             </div>
             <Link to="/" className="absolute left-1/2 -translate-x-1/2">
-              <div style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "4px" }} className="text-2xl text-gray-900 select-none whitespace-nowrap">
+              <div
+                style={{
+                  fontFamily: "'Bebas Neue', cursive",
+                  letterSpacing: "4px",
+                }}
+                className="text-2xl text-gray-900 select-none whitespace-nowrap"
+              >
                 <span style={{ color: "#C41E3A" }}>TOXIC</span>
                 <span className="ml-1 text-gray-900">SOCIETY</span>
               </div>
             </Link>
             <div className="flex items-center gap-3">
-              <button className="text-gray-800 hover:text-red-700 transition-colors" onClick={() => setSearchOpen(!searchOpen)}>
+              <button
+                className="text-gray-800 hover:text-red-700 transition-colors"
+                onClick={() => setSearchOpen(!searchOpen)}
+              >
                 <Search size={19} />
               </button>
-              <button className="relative text-gray-800 hover:text-red-700 transition-colors" onClick={() => setIsCartOpen(true)}>
+              <button
+                className="relative text-gray-800 hover:text-red-700 transition-colors"
+                onClick={() => setIsCartOpen(true)}
+              >
                 <ShoppingBag size={19} />
                 {totalItems > 0 && (
-                  <span style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }} className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                  <span
+                    style={{
+                      backgroundColor: "#C41E3A",
+                      fontFamily: "'Inter', sans-serif",
+                    }}
+                    className="absolute -top-2 -right-2 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center"
+                  >
                     {totalItems}
                   </span>
                 )}
               </button>
             </div>
           </div>
-
         </div>
 
         {/* Search bar */}
@@ -198,7 +269,12 @@ export function Navbar() {
             >
               Go
             </button>
-            <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }}>
+            <button
+              onClick={() => {
+                setSearchOpen(false);
+                setSearchQuery("");
+              }}
+            >
               <X size={16} className="text-gray-400" />
             </button>
           </div>
@@ -207,7 +283,14 @@ export function Navbar() {
         {/* Mobile dropdown — Drops + About only */}
         {menuOpen && (
           <div className="md:hidden bg-white border-t border-gray-100 px-5 py-5 flex flex-col gap-4">
-            <p style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "3px", color: "#bbb" }} className="text-[10px] uppercase mb-1">
+            <p
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                letterSpacing: "3px",
+                color: "#bbb",
+              }}
+              className="text-[10px] uppercase mb-1"
+            >
               More Pages
             </p>
             {mobileMenuLinks.map(({ label, to, icon: Icon }) => (
@@ -223,9 +306,14 @@ export function Navbar() {
               >
                 <span
                   className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: isActive(to) ? "#C41E3A" : "#f3f3f3" }}
+                  style={{
+                    backgroundColor: isActive(to) ? "#C41E3A" : "#f3f3f3",
+                  }}
                 >
-                  <Icon size={14} style={{ color: isActive(to) ? "white" : "#555" }} />
+                  <Icon
+                    size={14}
+                    style={{ color: isActive(to) ? "white" : "#555" }}
+                  />
                 </span>
                 {label}
               </Link>
@@ -276,7 +364,10 @@ export function Navbar() {
                 />
                 {to === "/wishlist" && wishlistCount > 0 && (
                   <span
-                    style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
+                    style={{
+                      backgroundColor: "#C41E3A",
+                      fontFamily: "'Inter', sans-serif",
+                    }}
                     className="absolute -top-[7px] -right-[7px] text-white text-[9px] w-[14px] h-[14px] rounded-full flex items-center justify-center font-bold"
                   >
                     {wishlistCount}
@@ -315,7 +406,10 @@ export function Navbar() {
             />
             {totalItems > 0 && (
               <span
-                style={{ backgroundColor: "#C41E3A", fontFamily: "'Inter', sans-serif" }}
+                style={{
+                  backgroundColor: "#C41E3A",
+                  fontFamily: "'Inter', sans-serif",
+                }}
                 className="absolute -top-[7px] -right-[7px] text-white text-[9px] w-[14px] h-[14px] rounded-full flex items-center justify-center font-bold"
               >
                 {totalItems}
