@@ -145,7 +145,7 @@ export function Account() {
             Sign in to your account to view and manage your profile information.
           </p>
           <button
-            onClick={signInWithGoogle}
+            onClick={() => signInWithGoogle(false)}
             style={{
               backgroundColor: "#C41E3A",
               fontFamily: "'Bebas Neue', cursive",
