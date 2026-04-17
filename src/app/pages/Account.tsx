@@ -3,6 +3,15 @@ import { useNavigate } from "react-router";
 import { User, LogOut, Edit2, Save, X, Loader2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 
 export function Account() {
   const navigate = useNavigate();
@@ -17,6 +26,7 @@ export function Account() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -92,7 +102,11 @@ export function Account() {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = async () => {
     await signOut();
     navigate("/");
   };
@@ -438,11 +452,39 @@ export function Account() {
             fontFamily: "'Inter', sans-serif",
             color: "#6B7280",
           }}
-          className="w-full mt-6 flex items-center justify-center gap-2 border px-6 py-3 text-xs uppercase tracking-widest hover:bg-gray-50 transition-colors"
+          className="w-full mt-6 flex items-center justify-center gap-2 border px-6 py-3 text-xs uppercase tracking-widest hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <LogOut size={14} />
           Sign Out
         </button>
+
+        {/* Logout Confirmation Modal */}
+        <AlertDialog
+          open={showLogoutConfirm}
+          onOpenChange={setShowLogoutConfirm}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Sign Out</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to sign out? You'll need to sign in again
+                to access your account.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="flex gap-3 justify-end">
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmLogout}
+                style={{
+                  backgroundColor: "#C41E3A",
+                }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Sign Out
+              </AlertDialogAction>
+            </div>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
