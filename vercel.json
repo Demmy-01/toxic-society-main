@@ -3,8 +3,8 @@
     "outputDirectory": "dist",
     "rewrites": [
         {
-            "source": "/admin/:path*",
-            "destination": "/admin/index.html"
+            "source": "/ts-admin/:path*",
+            "destination": "/ts-admin/index.html"
         },
         {
             "source": "/((?!api/).*)",

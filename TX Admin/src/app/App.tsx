@@ -45,7 +45,7 @@ export default function App() {
   }
 
   return (
-    <Router basename="/admin">
+    <Router basename="/ts-admin">
       <Routes>
         <Route
           path="/login"
@@ -147,10 +147,7 @@ export default function App() {
             )
           }
         />
-        <Route
-          path="/"
-          element={<Navigate to="/login" />}
-        />
+        <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
   );
