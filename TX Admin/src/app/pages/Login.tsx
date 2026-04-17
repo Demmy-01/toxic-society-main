@@ -34,22 +34,8 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
 
-    // Check if user is an admin
+    // Login successful
     if (authData.user) {
-      const { data: adminUser, error: adminError } = await supabase
-        .from("admin_users")
-        .select("id, role")
-        .eq("id", authData.user.id)
-        .single();
-
-      if (adminError || !adminUser) {
-        // User is authenticated but not an admin
-        await supabase.auth.signOut();
-        setIsLoading(false);
-        setError("Access denied. You do not have admin privileges.");
-        return;
-      }
-
       setIsLoading(false);
       onLogin();
     }
