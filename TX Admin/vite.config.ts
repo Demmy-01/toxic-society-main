@@ -4,8 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  base: '/admin/',
   build: {
-    outDir: 'dist',
+    outDir: '../dist/admin',
     emptyOutDir: true,
   },
   plugins: [

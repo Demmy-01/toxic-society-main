@@ -101,6 +101,11 @@ function localApiPlugin(env: Record<string, string>): Plugin {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
+    base: '/',
+    build: {
+      outDir: 'dist',
+      emptyOutDir: true,
+    },
     plugins: [
       figmaAssetPlugin(),
       localApiPlugin(env),
