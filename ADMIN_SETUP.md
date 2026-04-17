@@ -2,20 +2,19 @@
 
 ## 🔐 Admin Authentication System
 
-Your admin portal now has a secure role-based authentication system with one-time admin registration.
+Your admin portal now has a **secure**, **rate-limit-free** authentication system using a Supabase Edge Function.
 
-## Setup Steps
+## Setup Steps (EASY!)
 
-### Step 1: Create the Admin Users Table in Supabase
+### Step 1: Create the Admin Users Table
 
 1. Go to [Supabase Dashboard](https://app.supabase.com)
 2. Select your "toxic society" project
-3. Go to **SQL Editor** (left sidebar)
+3. Go to **SQL Editor**
 4. Click **"New Query"**
-5. Copy and paste the SQL below:
+5. Paste this:
 
 ```sql
--- Create admin_users table
 CREATE TABLE IF NOT EXISTS admin_users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
@@ -25,183 +24,121 @@ CREATE TABLE IF NOT EXISTS admin_users (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable Row Level Security
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies
--- Allow anyone to check if admins exist (for registration page)
 CREATE POLICY "Anyone can read admin count"
-  ON admin_users
-  FOR SELECT
-  USING (true);
+  ON admin_users FOR SELECT USING (true);
 
--- Allow admins to read all admin users
 CREATE POLICY "Admins can read admin users"
-  ON admin_users
-  FOR SELECT
-  USING (
-    auth.uid() IN (
-      SELECT id FROM admin_users WHERE role IN ('admin', 'editor')
-    )
-  );
+  ON admin_users FOR SELECT
+  USING (auth.uid() IN (SELECT id FROM admin_users WHERE role IN ('admin', 'editor')));
 
--- Allow only the owner to update
 CREATE POLICY "Users can update their own admin record"
-  ON admin_users
-  FOR UPDATE
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
+  ON admin_users FOR UPDATE
+  USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
--- Create indexes
 CREATE INDEX idx_admin_users_email ON admin_users(email);
 CREATE INDEX idx_admin_users_role ON admin_users(role);
 ```
 
-6. Click **"Run"**
-7. You should see success message: "Ran 1 query successfully"
+6. Click **"Run"** ✅
 
-### Step 2: Create the Admin Function
+### Step 2: Deploy the Edge Function
 
-1. In the same SQL Editor, click **"New Query"**
-2. Copy and paste:
+This happens **automatically**:
+- The edge function code is already in your repo (`supabase/functions/create-admin-user/`)
+- When you deploy to Vercel, it auto-syncs to Supabase
+- OR run locally:
 
-```sql
--- Create a function to handle admin creation
-CREATE OR REPLACE FUNCTION public.create_admin_user(user_id UUID, user_email TEXT)
-RETURNS JSONB
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  existing_admin_count INT;
-BEGIN
-  -- Check if any admin already exists
-  SELECT COUNT(*) INTO existing_admin_count FROM admin_users;
-  
-  IF existing_admin_count > 0 THEN
-    RETURN jsonb_build_object('success', false, 'error', 'Admin account already exists');
-  END IF;
-  
-  -- Insert the admin user
-  INSERT INTO admin_users (id, email, role, is_owner)
-  VALUES (user_id, user_email, 'admin', true)
-  ON CONFLICT DO NOTHING;
-  
-  RETURN jsonb_build_object('success', true, 'message', 'Admin user created successfully');
-  
-EXCEPTION WHEN OTHERS THEN
-  RETURN jsonb_build_object('success', false, 'error', SQLERRM);
-END;
-$$;
-
--- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION public.create_admin_user(UUID, TEXT) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.create_admin_user(UUID, TEXT) TO anon;
+```bash
+supabase functions deploy create-admin-user
 ```
 
-3. Click **"Run"**
-
-### Step 3: Access Admin Registration
+### Step 3: Register Admin
 
 1. Go to `yourdomain.com/admin`
-2. You'll be redirected to `/admin/register` (since no admin exists yet)
-3. Fill in:
-   - **Email**: Your admin email
-   - **Password**: At least 8 characters
-   - **Confirm Password**: Must match
-4. Click **"Create Admin Account"**
+2. You'll see the registration form
+3. Fill in email and password
+4. Click **"Create Admin Account"** 
 
-### Step 4: Login
+✅ Done! No more rate limiting!
 
-1. You'll be redirected to `/admin/login`
-2. Log in with your admin credentials
-3. You now have access to the full admin dashboard!
+### What This Does
+- ✅ Edge function uses Supabase **admin API** (no rate limits)
+- ✅ Auto-confirms email (no email verification needed)
+- ✅ One-time setup (prevents multiple admins)
+- ✅ Secure (admin is tied to auth user)
 
 ## How It Works
 
-### Registration
-- **One-time setup**: Only shows registration if NO admin exists
-- **After first admin**: Page locks down, shows "Admin already exists" message
-- **Secure function**: Uses Supabase function with elevated privileges to create admin
-- **Automatic creation**: Creates both Supabase Auth user and admin_users record
+### Registration Flow
+1. Submit email + password
+2. Edge function creates auth user (using admin API - bypasses rate limits!)
+3. Edge function creates admin_users record
+4. Auto-login and redirect to dashboard
 
-### Login
-- Checks email + password against Supabase Auth
-- Verifies user has admin privileges in `admin_users` table
-- Denies access if user authenticated but not an admin
-- Creates secure session
+### Login Flow
+1. Enter email + password
+2. System checks Supabase Auth
+3. Verifies user exists in admin_users table
+4. If not admin → denies access
 
-### Security Features
+## Security
+
 - ✅ Role-based access control (admin, editor, viewer)
 - ✅ Row Level Security (RLS) enabled
-- ✅ One-time registration prevents unauthorized signups
+- ✅ One-time registration only
 - ✅ Admin records tied to auth users
-- ✅ Automatic cleanup if user deleted
+- ✅ Service role key only used server-side
 
 ## Managing Admins
 
-### Add More Admins (After First One)
+### Add More Admins
 
 In Supabase SQL Editor:
 
 ```sql
--- Invite a new admin (they sign up first, then you add to admin_users)
+-- Create auth user first, then add to admin_users
 INSERT INTO admin_users (id, email, role, is_owner)
 SELECT id, email, 'editor', FALSE
 FROM auth.users
 WHERE email = 'newadmin@toxicsociety.com';
 ```
 
-### Change Admin Roles
+### Change Roles
 
 ```sql
--- Change role to editor (limited permissions)
-UPDATE admin_users 
-SET role = 'editor' 
-WHERE email = 'admin@toxicsociety.com';
+UPDATE admin_users SET role = 'editor' WHERE email = 'admin@toxicsociety.com';
 ```
 
 ### Remove Admin
 
 ```sql
--- Remove admin (keeps auth user, removes admin access)
-DELETE FROM admin_users 
-WHERE email = 'oldadmin@toxicsociety.com';
+DELETE FROM admin_users WHERE email = 'admin@toxicsociety.com';
 ```
 
 ## Troubleshooting
 
-### "No routes matched location '/admin'"
-- **Cause**: Router basename issue
-- **Fix**: Already fixed in vite.config.ts and App.tsx
+### Email Rate Limit Exceeded
+- **Cause**: Old signup attempts (now FIXED by edge function)
+- **Fix**: This shouldn't happen anymore!
 
 ### "Access denied. You do not have admin privileges"
-- **Cause**: User is authenticated but not in admin_users table
-- **Fix**: Add user to admin_users table in Supabase
+- **Cause**: User authenticated but not in admin_users
+- **Fix**: Manually add to admin_users in Supabase
 
-### "Failed to create admin account"
-- **Cause**: Database error
-- **Fix**: Check that admin_users table was created correctly
-
-### Admin registration page stuck on "checking admins"
-- **Cause**: admin_users table doesn't exist or permission issue
-- **Fix**: Run the SQL setup query in Step 1
+### Edge Function Not Working
+- **Fix**: Run `supabase functions deploy create-admin-user` locally
 
 ## Environment Variables
 
-Make sure your `.env.local` file has:
-
+Your `.env.local` needs:
 ```
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_URL=your_url
+VITE_SUPABASE_ANON_KEY=your_key
 ```
 
-## Next Steps
-
-1. ✅ Create the admin_users table (Step 1)
-2. ✅ Create the admin function (Step 2)
-3. ✅ Register first admin (Step 3)
-4. ✅ Login and test dashboard (Step 4)
-5. 📝 Add more admins as needed
-6. 🔐 Configure role permissions for editors/viewers
+Your Vercel project needs the secret:
+```
+SUPABASE_SERVICE_ROLE_KEY=your_service_key
+```

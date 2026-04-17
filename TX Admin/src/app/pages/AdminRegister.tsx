@@ -1,18 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Lock, Mail, AlertCircle, CheckCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { useState, useEffect } from "react";
+import { Lock, Mail, AlertCircle, CheckCircle } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 
 interface AdminRegisterProps {
   onRegisterComplete: () => void;
 }
 
-export default function AdminRegister({ onRegisterComplete }: AdminRegisterProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+export default function AdminRegister({
+  onRegisterComplete,
+}: AdminRegisterProps) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [canRegister, setCanRegister] = useState(true);
   const [checkingAdmins, setCheckingAdmins] = useState(true);
 
@@ -21,8 +23,8 @@ export default function AdminRegister({ onRegisterComplete }: AdminRegisterProps
     const checkExistingAdmins = async () => {
       try {
         const { data, error } = await supabase
-          .from('admin_users')
-          .select('id', { count: 'exact' });
+          .from("admin_users")
+          .select("id", { count: "exact" });
 
         if (error) {
           // Table doesn't exist yet - allow registration
@@ -30,13 +32,15 @@ export default function AdminRegister({ onRegisterComplete }: AdminRegisterProps
         } else if (data && data.length > 0) {
           // Admin already exists
           setCanRegister(false);
-          setError('An admin account already exists. Please use the login page.');
+          setError(
+            "An admin account already exists. Please use the login page.",
+          );
         } else {
           // No admins exist - allow registration
           setCanRegister(true);
         }
       } catch (err) {
-        console.error('Error checking admins:', err);
+        console.error("Error checking admins:", err);
         setCanRegister(true);
       } finally {
         setCheckingAdmins(false);
@@ -48,15 +52,15 @@ export default function AdminRegister({ onRegisterComplete }: AdminRegisterProps
 
   const validateForm = () => {
     if (!email || !password || !confirmPassword) {
-      setError('All fields are required.');
+      setError("All fields are required.");
       return false;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      setError("Password must be at least 8 characters long.");
       return false;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError("Passwords do not match.");
       return false;
     }
     return true;
@@ -64,50 +68,43 @@ export default function AdminRegister({ onRegisterComplete }: AdminRegisterProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     if (!validateForm()) return;
 
     setIsLoading(true);
 
     try {
-      // Create Supabase Auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      // Call the edge function to create admin
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-admin-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+      );
 
-      if (authError) {
-        setError(authError.message || 'Failed to create account.');
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setError(result.error || "Failed to create admin account. Please try again.");
         setIsLoading(false);
         return;
       }
 
-      if (authData.user) {
-        // Create admin record using the edge function
-        const { data: functionResult, error: functionError } = await supabase
-          .rpc('create_admin_user', {
-            user_id: authData.user.id,
-            user_email: email,
-          });
-
-        if (functionError || !functionResult?.success) {
-          // If admin record creation fails, delete the auth user
-          await supabase.auth.admin.deleteUser(authData.user.id);
-          setError(functionResult?.error || 'Failed to create admin account. Please try again.');
-          setIsLoading(false);
-          return;
-        }
-
-        setSuccess('Admin account created successfully! Redirecting to login...');
-        setTimeout(() => {
-          onRegisterComplete();
-        }, 2000);
-      }
+      setSuccess("Admin account created successfully! Redirecting to login...");
+      setTimeout(() => {
+        onRegisterComplete();
+      }, 2000);
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
-    } finally {
+      setError(err.message || "An unexpected error occurred.");
       setIsLoading(false);
     }
   };
@@ -141,7 +138,8 @@ export default function AdminRegister({ onRegisterComplete }: AdminRegisterProps
               <AlertCircle className="w-12 h-12 text-yellow-500" />
               <h2 className="text-xl text-white">Admin Already Exists</h2>
               <p className="text-neutral-400 text-center text-sm">
-                An admin account has already been created. Please use the login page to access the dashboard.
+                An admin account has already been created. Please use the login
+                page to access the dashboard.
               </p>
               <a
                 href="/admin/login"
@@ -184,7 +182,10 @@ export default function AdminRegister({ onRegisterComplete }: AdminRegisterProps
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Input */}
             <div>
-              <label htmlFor="email" className="block text-sm text-neutral-300 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm text-neutral-300 mb-2"
+              >
                 Email
               </label>
               <div className="relative">
@@ -203,7 +204,10 @@ export default function AdminRegister({ onRegisterComplete }: AdminRegisterProps
 
             {/* Password Input */}
             <div>
-              <label htmlFor="password" className="block text-sm text-neutral-300 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm text-neutral-300 mb-2"
+              >
                 Password
               </label>
               <div className="relative">
@@ -222,7 +226,10 @@ export default function AdminRegister({ onRegisterComplete }: AdminRegisterProps
 
             {/* Confirm Password Input */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm text-neutral-300 mb-2">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm text-neutral-300 mb-2"
+              >
                 Confirm Password
               </label>
               <div className="relative">
@@ -259,7 +266,7 @@ export default function AdminRegister({ onRegisterComplete }: AdminRegisterProps
               disabled={isLoading}
               className="w-full bg-[#dc2626] hover:bg-[#b91c1c] text-white py-3 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Creating Account...' : 'Create Admin Account'}
+              {isLoading ? "Creating Account..." : "Create Admin Account"}
             </button>
           </form>
         </div>

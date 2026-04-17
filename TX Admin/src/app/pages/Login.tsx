@@ -1,34 +1,35 @@
-import { useState } from 'react';
-import { Lock, Mail, AlertCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { useState } from "react";
+import { Lock, Mail, AlertCircle } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 
 interface LoginProps {
   onLogin: () => void;
 }
 
 export default function Login({ onLogin }: LoginProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError("");
 
     // Attempt login
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data: authData, error: authError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
     if (authError) {
       setIsLoading(false);
       setError(
-        authError.message === 'Invalid login credentials'
-          ? 'Incorrect email or password.'
-          : authError.message
+        authError.message === "Invalid login credentials"
+          ? "Incorrect email or password."
+          : authError.message,
       );
       return;
     }
@@ -36,16 +37,16 @@ export default function Login({ onLogin }: LoginProps) {
     // Check if user is an admin
     if (authData.user) {
       const { data: adminUser, error: adminError } = await supabase
-        .from('admin_users')
-        .select('id, role')
-        .eq('id', authData.user.id)
+        .from("admin_users")
+        .select("id, role")
+        .eq("id", authData.user.id)
         .single();
 
       if (adminError || !adminUser) {
         // User is authenticated but not an admin
         await supabase.auth.signOut();
         setIsLoading(false);
-        setError('Access denied. You do not have admin privileges.');
+        setError("Access denied. You do not have admin privileges.");
         return;
       }
 
@@ -75,7 +76,10 @@ export default function Login({ onLogin }: LoginProps) {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Input */}
             <div>
-              <label htmlFor="email" className="block text-sm text-neutral-300 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm text-neutral-300 mb-2"
+              >
                 Email
               </label>
               <div className="relative">
@@ -94,7 +98,10 @@ export default function Login({ onLogin }: LoginProps) {
 
             {/* Password Input */}
             <div>
-              <label htmlFor="password" className="block text-sm text-neutral-300 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm text-neutral-300 mb-2"
+              >
                 Password
               </label>
               <div className="relative">
@@ -134,7 +141,7 @@ export default function Login({ onLogin }: LoginProps) {
               disabled={isLoading}
               className="w-full bg-[#dc2626] hover:bg-[#b91c1c] text-white py-3 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? "Signing in..." : "Sign In"}
             </button>
           </form>
         </div>

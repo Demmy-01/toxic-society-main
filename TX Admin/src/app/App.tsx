@@ -191,7 +191,10 @@ export default function App() {
             )
           }
         />
-        <Route path="/" element={<Navigate to={adminExists ? "/login" : "/register"} />} />
+        <Route
+          path="/"
+          element={<Navigate to={adminExists ? "/login" : "/register"} />}
+        />
       </Routes>
     </Router>
   );
