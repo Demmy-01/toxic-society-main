@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import Login from "./pages/Login";
+import AdminRegister from "./pages/AdminRegister";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import Products from "./pages/Products";
@@ -14,13 +15,41 @@ import UsersAdmin from "./pages/Users";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminExists, setAdminExists] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-      setLoading(false);
-    });
+    const initializeApp = async () => {
+      // Check if admin users exist
+      try {
+        const { data, error } = await supabase
+          .from("admin_users")
+          .select("id", { count: "exact" });
+
+        if (error) {
+          // Table doesn't exist yet - show registration
+          setAdminExists(false);
+        } else if (data && data.length > 0) {
+          // Admin exists - show login
+          setAdminExists(true);
+        } else {
+          // No admin exists - show registration
+          setAdminExists(false);
+        }
+      } catch (err) {
+        console.error("Error checking admin status:", err);
+        // Default to showing login
+        setAdminExists(true);
+      }
+
+      // Check authentication status
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setIsAuthenticated(!!session);
+        setLoading(false);
+      });
+    };
+
+    initializeApp();
 
     const {
       data: { subscription },
@@ -47,10 +76,26 @@ export default function App() {
     <Router basename="/admin">
       <Routes>
         <Route
+          path="/register"
+          element={
+            adminExists ? (
+              <Navigate to="/login" />
+            ) : (
+              <AdminRegister
+                onRegisterComplete={() => {
+                  setAdminExists(true);
+                }}
+              />
+            )
+          }
+        />
+        <Route
           path="/login"
           element={
             isAuthenticated ? (
               <Navigate to="/dashboard" />
+            ) : !adminExists ? (
+              <Navigate to="/register" />
             ) : (
               <Login onLogin={() => setIsAuthenticated(true)} />
             )
@@ -146,7 +191,7 @@ export default function App() {
             )
           }
         />
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to={adminExists ? "/login" : "/register"} />} />
       </Routes>
     </Router>
   );

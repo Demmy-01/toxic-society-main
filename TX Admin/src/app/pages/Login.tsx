@@ -16,13 +16,40 @@ export default function Login({ onLogin }: LoginProps) {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setIsLoading(false);
-    if (error) {
-      setError(error.message === 'Invalid login credentials'
-        ? 'Incorrect email or password.'
-        : error.message);
-    } else {
+
+    // Attempt login
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      setIsLoading(false);
+      setError(
+        authError.message === 'Invalid login credentials'
+          ? 'Incorrect email or password.'
+          : authError.message
+      );
+      return;
+    }
+
+    // Check if user is an admin
+    if (authData.user) {
+      const { data: adminUser, error: adminError } = await supabase
+        .from('admin_users')
+        .select('id, role')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (adminError || !adminUser) {
+        // User is authenticated but not an admin
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        setError('Access denied. You do not have admin privileges.');
+        return;
+      }
+
+      setIsLoading(false);
       onLogin();
     }
   };
