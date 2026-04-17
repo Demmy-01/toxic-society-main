@@ -29,6 +29,13 @@ CREATE TABLE IF NOT EXISTS admin_users (
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies
+-- Allow anyone to check if admins exist (for registration page)
+CREATE POLICY "Anyone can read admin count"
+  ON admin_users
+  FOR SELECT
+  USING (true);
+
+-- Allow admins to read all admin users
 CREATE POLICY "Admins can read admin users"
   ON admin_users
   FOR SELECT
@@ -38,6 +45,7 @@ CREATE POLICY "Admins can read admin users"
     )
   );
 
+-- Allow only the owner to update
 CREATE POLICY "Users can update their own admin record"
   ON admin_users
   FOR UPDATE
@@ -52,7 +60,49 @@ CREATE INDEX idx_admin_users_role ON admin_users(role);
 6. Click **"Run"**
 7. You should see success message: "Ran 1 query successfully"
 
-### Step 2: Access Admin Registration
+### Step 2: Create the Admin Function
+
+1. In the same SQL Editor, click **"New Query"**
+2. Copy and paste:
+
+```sql
+-- Create a function to handle admin creation
+CREATE OR REPLACE FUNCTION public.create_admin_user(user_id UUID, user_email TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  existing_admin_count INT;
+BEGIN
+  -- Check if any admin already exists
+  SELECT COUNT(*) INTO existing_admin_count FROM admin_users;
+  
+  IF existing_admin_count > 0 THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Admin account already exists');
+  END IF;
+  
+  -- Insert the admin user
+  INSERT INTO admin_users (id, email, role, is_owner)
+  VALUES (user_id, user_email, 'admin', true)
+  ON CONFLICT DO NOTHING;
+  
+  RETURN jsonb_build_object('success', true, 'message', 'Admin user created successfully');
+  
+EXCEPTION WHEN OTHERS THEN
+  RETURN jsonb_build_object('success', false, 'error', SQLERRM);
+END;
+$$;
+
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION public.create_admin_user(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_admin_user(UUID, TEXT) TO anon;
+```
+
+3. Click **"Run"**
+
+### Step 3: Access Admin Registration
 
 1. Go to `yourdomain.com/admin`
 2. You'll be redirected to `/admin/register` (since no admin exists yet)
@@ -62,7 +112,7 @@ CREATE INDEX idx_admin_users_role ON admin_users(role);
    - **Confirm Password**: Must match
 4. Click **"Create Admin Account"**
 
-### Step 3: Login
+### Step 4: Login
 
 1. You'll be redirected to `/admin/login`
 2. Log in with your admin credentials
@@ -73,6 +123,7 @@ CREATE INDEX idx_admin_users_role ON admin_users(role);
 ### Registration
 - **One-time setup**: Only shows registration if NO admin exists
 - **After first admin**: Page locks down, shows "Admin already exists" message
+- **Secure function**: Uses Supabase function with elevated privileges to create admin
 - **Automatic creation**: Creates both Supabase Auth user and admin_users record
 
 ### Login
@@ -149,7 +200,8 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ## Next Steps
 
 1. ✅ Create the admin_users table (Step 1)
-2. ✅ Register first admin (Step 2)
-3. ✅ Login and test dashboard (Step 3)
-4. 📝 Add more admins as needed
-5. 🔐 Configure role permissions for editors/viewers
+2. ✅ Create the admin function (Step 2)
+3. ✅ Register first admin (Step 3)
+4. ✅ Login and test dashboard (Step 4)
+5. 📝 Add more admins as needed
+6. 🔐 Configure role permissions for editors/viewers

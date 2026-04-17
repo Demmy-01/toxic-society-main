@@ -12,6 +12,12 @@ CREATE TABLE IF NOT EXISTS admin_users (
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies
+-- Allow anyone to check if admins exist (for registration page)
+CREATE POLICY "Anyone can read admin count"
+  ON admin_users
+  FOR SELECT
+  USING (true);
+
 -- Allow admins to read all admin users
 CREATE POLICY "Admins can read admin users"
   ON admin_users
@@ -28,6 +34,8 @@ CREATE POLICY "Users can update their own admin record"
   FOR UPDATE
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
+
+-- Function handles inserts with proper permissions - no policy needed
 
 -- Create indexes
 CREATE INDEX idx_admin_users_email ON admin_users(email);

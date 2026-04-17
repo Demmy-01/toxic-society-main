@@ -85,20 +85,17 @@ export default function AdminRegister({ onRegisterComplete }: AdminRegisterProps
       }
 
       if (authData.user) {
-        // Create admin record
-        const { error: adminError } = await supabase
-          .from('admin_users')
-          .insert({
-            id: authData.user.id,
-            email,
-            role: 'admin',
-            is_owner: true,
+        // Create admin record using the edge function
+        const { data: functionResult, error: functionError } = await supabase
+          .rpc('create_admin_user', {
+            user_id: authData.user.id,
+            user_email: email,
           });
 
-        if (adminError) {
+        if (functionError || !functionResult?.success) {
           // If admin record creation fails, delete the auth user
           await supabase.auth.admin.deleteUser(authData.user.id);
-          setError('Failed to create admin account. Please try again.');
+          setError(functionResult?.error || 'Failed to create admin account. Please try again.');
           setIsLoading(false);
           return;
         }
