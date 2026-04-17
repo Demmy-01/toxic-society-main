@@ -46,6 +46,7 @@ CREATE INDEX idx_admin_users_role ON admin_users(role);
 ### Step 2: Deploy the Edge Function
 
 This happens **automatically**:
+
 - The edge function code is already in your repo (`supabase/functions/create-admin-user/`)
 - When you deploy to Vercel, it auto-syncs to Supabase
 - OR run locally:
@@ -59,11 +60,12 @@ supabase functions deploy create-admin-user
 1. Go to `yourdomain.com/admin`
 2. You'll see the registration form
 3. Fill in email and password
-4. Click **"Create Admin Account"** 
+4. Click **"Create Admin Account"**
 
 ✅ Done! No more rate limiting!
 
 ### What This Does
+
 - ✅ Edge function uses Supabase **admin API** (no rate limits)
 - ✅ Auto-confirms email (no email verification needed)
 - ✅ One-time setup (prevents multiple admins)
@@ -72,12 +74,14 @@ supabase functions deploy create-admin-user
 ## How It Works
 
 ### Registration Flow
+
 1. Submit email + password
 2. Edge function creates auth user (using admin API - bypasses rate limits!)
 3. Edge function creates admin_users record
 4. Auto-login and redirect to dashboard
 
 ### Login Flow
+
 1. Enter email + password
 2. System checks Supabase Auth
 3. Verifies user exists in admin_users table
@@ -120,25 +124,30 @@ DELETE FROM admin_users WHERE email = 'admin@toxicsociety.com';
 ## Troubleshooting
 
 ### Email Rate Limit Exceeded
+
 - **Cause**: Old signup attempts (now FIXED by edge function)
 - **Fix**: This shouldn't happen anymore!
 
 ### "Access denied. You do not have admin privileges"
+
 - **Cause**: User authenticated but not in admin_users
 - **Fix**: Manually add to admin_users in Supabase
 
 ### Edge Function Not Working
+
 - **Fix**: Run `supabase functions deploy create-admin-user` locally
 
 ## Environment Variables
 
 Your `.env.local` needs:
+
 ```
 VITE_SUPABASE_URL=your_url
 VITE_SUPABASE_ANON_KEY=your_key
 ```
 
 Your Vercel project needs the secret:
+
 ```
 SUPABASE_SERVICE_ROLE_KEY=your_service_key
 ```

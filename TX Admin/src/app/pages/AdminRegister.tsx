@@ -88,13 +88,15 @@ export default function AdminRegister({
             email,
             password,
           }),
-        }
+        },
       );
 
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        setError(result.error || "Failed to create admin account. Please try again.");
+        setError(
+          result.error || "Failed to create admin account. Please try again.",
+        );
         setIsLoading(false);
         return;
       }
