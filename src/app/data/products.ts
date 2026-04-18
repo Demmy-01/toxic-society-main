@@ -32,13 +32,26 @@ export const PRODUCT_IMAGES = {
 export async function fetchProducts(): Promise<Product[]> {
   const { supabase } = await import('../../lib/supabase');
 
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!supabaseUrl || supabaseUrl.includes('your-project')) {
+    console.error('❌ fetchProducts: VITE_SUPABASE_URL is not configured. Check your .env file.');
+    return [];
+  }
+
+  console.log('🛍️ fetchProducts: connecting to', supabaseUrl);
+
   // Get all LIVE drops
-  const { data: liveDrops } = await supabase
+  const { data: liveDrops, error: dropsError } = await supabase
     .from('drops')
     .select('id, name, status')
     .eq('status', 'LIVE');
 
+  if (dropsError) {
+    console.warn('⚠️ fetchProducts: could not load drops:', dropsError.message);
+  }
+
   const liveDropIds = new Set(liveDrops?.map(d => d.id) ?? []);
+  console.log('🔴 LIVE drop IDs:', [...liveDropIds]);
 
   // Fetch ALL products that are in stock with their drop info
   const { data, error } = await supabase
@@ -48,14 +61,17 @@ export async function fetchProducts(): Promise<Product[]> {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('❌ Error fetching products:', error);
+    console.error('❌ fetchProducts: Supabase error:', error.message, error);
     return [];
   }
 
+  console.log(`✅ fetchProducts: got ${data?.length ?? 0} in-stock products from Supabase`);
+
   if (!data || data.length === 0) return [];
 
-  // Filter in JavaScript: keep products with no drop OR products in LIVE drops
+  // Keep products with no drop OR products attached to a LIVE drop
   const filtered = data.filter(p => !p.drop_id || liveDropIds.has(p.drop_id));
+  console.log(`🔍 fetchProducts: ${filtered.length} products visible after drop filter`);
 
   return filtered.map((p) => ({
     id: p.id,

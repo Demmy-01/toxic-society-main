@@ -142,13 +142,20 @@ export function Drops() {
     }, 4000);
   };
 
-  const nextUnlocked = activeDrops.find((d) => !isDropLive(d, now));
-  const countdownDate = nextUnlocked?.drop_date
-    ? new Date(nextUnlocked.drop_date)
-    : new Date("2099-01-01T00:00:00Z");
+  // Countdown target = any active drop whose drop_date is still in the future.
+  // We deliberately ignore `status` here — drop_date drives the clock, not the status field.
+  const dropWithFutureDate = activeDrops.find(
+    (d) => d.drop_date && new Date(d.drop_date).getTime() > now
+  );
 
-  const dropName = nextUnlocked
-    ? `${nextUnlocked.name} — ${nextUnlocked.label}`
+  // If a future drop_date exists → count down to it.
+  // If every drop_date has already passed (or none set) → show "The Drop is Live" (0s).
+  const countdownDate: Date = dropWithFutureDate?.drop_date
+    ? new Date(dropWithFutureDate.drop_date)
+    : new Date(Date.now() - 1000);
+
+  const dropName = dropWithFutureDate
+    ? `${dropWithFutureDate.name} — ${dropWithFutureDate.label}`
     : upcomingDrop
       ? `${upcomingDrop.name} — ${upcomingDrop.label}`
       : "NEXT DROP — COMING SOON";
@@ -168,7 +175,7 @@ export function Drops() {
         targetDate={countdownDate}
         dropName={dropName}
         subtitle={
-          nextUnlocked?.description ??
+          dropWithFutureDate?.description ??
           upcomingDrop?.description ??
           "Something dark is coming. Sign up to be first in line."
         }
@@ -625,3 +632,4 @@ export function Drops() {
     </div>
   );
 }
+
