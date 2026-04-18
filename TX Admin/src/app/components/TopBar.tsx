@@ -1,13 +1,32 @@
-import { Bell, User, Menu } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, User, Menu } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router";
 
 interface TopBarProps {
   title: string;
   onMenuToggle: () => void;
+  onLogout: () => void;
 }
 
-export default function TopBar({ title, onMenuToggle }: TopBarProps) {
+export default function TopBar({ title, onMenuToggle, onLogout }: TopBarProps) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const navigate = useNavigate();
+
+  const handleProfile = () => {
+    navigate("/users");
+    setShowProfileMenu(false);
+  };
+
+  const handleSettings = () => {
+    navigate("/settings");
+    setShowProfileMenu(false);
+  };
+
+  const handleLogout = async () => {
+    setShowProfileMenu(false);
+    await onLogout();
+    navigate("/login");
+  };
 
   return (
     <header className="bg-[#1a1a1a] border-b border-neutral-800 px-4 md:px-8 py-4 flex items-center justify-between sticky top-0 z-20">
@@ -45,13 +64,22 @@ export default function TopBar({ title, onMenuToggle }: TopBarProps) {
 
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-[#1a1a1a] border border-neutral-800 rounded-xl shadow-xl overflow-hidden z-50">
-              <button className="w-full px-4 py-3 text-left text-sm text-neutral-300 hover:bg-[#0f0f0f] transition-colors">
+              <button
+                onClick={handleProfile}
+                className="w-full px-4 py-3 text-left text-sm text-neutral-300 hover:bg-[#0f0f0f] transition-colors"
+              >
                 Profile
               </button>
-              <button className="w-full px-4 py-3 text-left text-sm text-neutral-300 hover:bg-[#0f0f0f] transition-colors">
+              <button
+                onClick={handleSettings}
+                className="w-full px-4 py-3 text-left text-sm text-neutral-300 hover:bg-[#0f0f0f] transition-colors"
+              >
                 Settings
               </button>
-              <button className="w-full px-4 py-3 text-left text-sm text-[#dc2626] hover:bg-[#0f0f0f] transition-colors">
+              <button
+                onClick={handleLogout}
+                className="w-full px-4 py-3 text-left text-sm text-[#dc2626] hover:bg-[#0f0f0f] transition-colors"
+              >
                 Logout
               </button>
             </div>

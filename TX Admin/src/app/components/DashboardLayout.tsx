@@ -1,6 +1,6 @@
-import { ReactNode, useState } from 'react';
-import Sidebar from './Sidebar';
-import TopBar from './TopBar';
+import { ReactNode, useState } from "react";
+import Sidebar from "./Sidebar";
+import TopBar from "./TopBar";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -8,7 +8,11 @@ interface DashboardLayoutProps {
   onLogout: () => void;
 }
 
-export default function DashboardLayout({ children, title, onLogout }: DashboardLayoutProps) {
+export default function DashboardLayout({
+  children,
+  title,
+  onLogout,
+}: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -23,10 +27,9 @@ export default function DashboardLayout({ children, title, onLogout }: Dashboard
         <TopBar
           title={title}
           onMenuToggle={() => setSidebarOpen(true)}
+          onLogout={onLogout}
         />
-        <main className="p-4 md:p-6 lg:p-8">
-          {children}
-        </main>
+        <main className="p-4 md:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );
