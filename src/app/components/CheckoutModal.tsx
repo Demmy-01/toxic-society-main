@@ -304,6 +304,18 @@ export function CheckoutModal() {
       return;
     }
 
+    // Diagnostic: log key prefix so we can confirm it's being read correctly
+    const keyPreview = PAYSTACK_PUBLIC_KEY
+      ? `${PAYSTACK_PUBLIC_KEY.slice(0, 10)}...${PAYSTACK_PUBLIC_KEY.slice(-4)}`
+      : "UNDEFINED";
+    console.log(`[Paystack] Initiating payment. Key: ${keyPreview} | Currency: ${currency.code} | Amount (subunit): ${amountInSubunit}`);
+
+    if (!PAYSTACK_PUBLIC_KEY || PAYSTACK_PUBLIC_KEY === "undefined") {
+      setPayError("Payment configuration error: Paystack public key is missing. Contact support.");
+      setStep("form");
+      return;
+    }
+
     setStep("paying");
     setPayError("");
 
