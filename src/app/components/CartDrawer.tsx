@@ -4,6 +4,12 @@ import { useAuth } from "../../context/AuthContext";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { useCurrency } from "../context/CurrencyContext";
 
+const COLOR_HEX: Record<string, string> = {
+  Red: "#EF4444", Orange: "#F97316", Yellow: "#EAB308",
+  Green: "#22C55E", Blue: "#3B82F6", Indigo: "#6366F1",
+  Violet: "#A855F7", Beige: "#D4C5A9", White: "#FFFFFF", Black: "#1a1a1a",
+};
+
 export function CartDrawer() {
   const { items, removeItem, updateQuantity, totalPrice, isCartOpen, setIsCartOpen } = useCart();
   const { setShowCheckoutModal } = useAuth();
@@ -61,7 +67,7 @@ export function CartDrawer() {
           ) : (
             items.map((item) => (
               <div
-                key={`${item.id}-${item.size}`}
+                key={`${item.id}-${item.size}-${item.color ?? ''}`}
                 className="flex gap-4 pb-5 border-b border-gray-100 last:border-0"
               >
                 <div className="w-20 h-20 bg-gray-50 overflow-hidden flex-shrink-0">
@@ -78,19 +84,31 @@ export function CartDrawer() {
                   >
                     {item.name}
                   </p>
-                  <p
+                  <div
                     style={{ fontFamily: "'Inter', sans-serif" }}
-                    className="text-xs text-gray-400 mb-2"
+                    className="flex items-center gap-2 text-xs text-gray-400 mb-2 flex-wrap"
                   >
-                    Size: {item.size}
-                  </p>
+                    <span>Size: {item.size}</span>
+                    {item.color && (
+                      <>
+                        <span className="text-gray-300">·</span>
+                        <span className="flex items-center gap-1">
+                          <span
+                            className="w-3 h-3 rounded-full border border-gray-200 shrink-0"
+                            style={{ backgroundColor: COLOR_HEX[item.color] ?? item.color }}
+                          />
+                          {item.color}
+                        </span>
+                      </>
+                    )}
+                  </div>
                   <div className="flex items-center justify-between">
                     {/* Quantity controls */}
                     <div className="flex items-center border border-gray-200 h-7">
                       <button
                         className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors"
                         onClick={() =>
-                          updateQuantity(item.id, item.size, item.quantity - 1)
+                          updateQuantity(item.id, item.size, item.quantity - 1, item.color)
                         }
                       >
                         <Minus size={12} />
@@ -104,7 +122,7 @@ export function CartDrawer() {
                       <button
                         className="w-7 h-full flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors"
                         onClick={() =>
-                          updateQuantity(item.id, item.size, item.quantity + 1)
+                          updateQuantity(item.id, item.size, item.quantity + 1, item.color)
                         }
                       >
                         <Plus size={12} />
@@ -118,7 +136,7 @@ export function CartDrawer() {
                         {formatPrice(item.price * item.quantity)}
                       </span>
                       <button
-                        onClick={() => removeItem(item.id, item.size)}
+                        onClick={() => removeItem(item.id, item.size, item.color)}
                         className="text-gray-300 hover:text-red-500 transition-colors"
                       >
                         <Trash2 size={14} />

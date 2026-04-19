@@ -11,12 +11,19 @@ import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { useCurrency } from "../context/CurrencyContext";
 
+const COLOR_HEX: Record<string, string> = {
+  Red: "#EF4444", Orange: "#F97316", Yellow: "#EAB308",
+  Green: "#22C55E", Blue: "#3B82F6", Indigo: "#6366F1",
+  Violet: "#A855F7", Beige: "#D4C5A9", White: "#FFFFFF", Black: "#1a1a1a",
+};
+
 interface OrderItem {
   id: string;
   name: string;
   price: number;
   image: string;
   size: string;
+  color?: string;
   quantity: number;
 }
 
@@ -405,15 +412,26 @@ export function History() {
                           >
                             {item.name}
                           </p>
-                          <p
+                          <div
                             style={{ fontFamily: "'Inter', sans-serif" }}
-                            className="text-xs text-gray-500 mt-1"
+                            className="flex items-center gap-2 text-xs text-gray-500 mt-1 flex-wrap"
                           >
-                            Size:{" "}
-                            <span className="font-medium">{item.size}</span> ·
-                            Qty:{" "}
-                            <span className="font-medium">{item.quantity}</span>
-                          </p>
+                            <span>Size: <span className="font-medium">{item.size}</span></span>
+                            {item.color && (
+                              <>
+                                <span className="text-gray-300">·</span>
+                                <span className="flex items-center gap-1">
+                                  <span
+                                    className="w-3 h-3 rounded-full border border-gray-200 shrink-0"
+                                    style={{ backgroundColor: COLOR_HEX[item.color] ?? item.color }}
+                                  />
+                                  {item.color}
+                                </span>
+                              </>
+                            )}
+                            <span className="text-gray-300">·</span>
+                            <span>Qty: <span className="font-medium">{item.quantity}</span></span>
+                          </div>
                           <p
                             style={{
                               fontFamily: "'Inter', sans-serif",

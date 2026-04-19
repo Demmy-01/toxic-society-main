@@ -14,6 +14,7 @@ export interface Product {
   category: string;
   description: string;
   sizes: string[];
+  colors: string[];
   tag?: string;
   inStock: boolean;
   collection: string;
@@ -85,6 +86,7 @@ export async function fetchProducts(): Promise<Product[]> {
     drop: (p.drops as { name: string } | null)?.name || '',
     description: p.description || '',
     sizes: p.sizes || [],
+    colors: p.colors || [],
     tag: p.tag || (liveDropIds.has(p.drop_id) ? "DROP" : undefined),
     inStock: p.in_stock ?? true,
   }));
@@ -105,6 +107,7 @@ export const products: Product[] = [
     description:
       "The signature Toxic Society polo sweatshirt. Deep crimson with rhinestone flame detailing on the sleeves, white contrast collar and cuffs, and the iconic Toxic Society emblem embroidered on the chest. Limited edition drop.",
     sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+    colors: ["Red", "Beige"],
     tag: "NEW DROP",
     inStock: true,
   },
@@ -120,6 +123,7 @@ export const products: Product[] = [
     description:
       "Premium red leather belt with the iconic Toxic Society barbed wire logo in silver metal hardware. A statement accessory for those who live on the edge. One size fits most.",
     sizes: ["ONE SIZE"],
+    colors: ["Red"],
     tag: "BESTSELLER",
     inStock: true,
   },
@@ -135,6 +139,7 @@ export const products: Product[] = [
     description:
       "Clean white heavyweight tee with the Toxic Society barbed wire logo screened across the chest in blood red. Simple. Dangerous. Unforgettable.",
     sizes: ["XS", "S", "M", "L", "XL"],
+    colors: [],
     inStock: true,
   },
   {
@@ -149,6 +154,7 @@ export const products: Product[] = [
     description:
       "Crimson cargo pants with subtle flame embroidery along the side seams. Four functional cargo pockets with branded metal zippers. A perfect companion to the Flame Polo Sweatshirt.",
     sizes: ["28", "30", "32", "34", "36"],
+    colors: [],
     inStock: true,
   },
   {
@@ -164,6 +170,7 @@ export const products: Product[] = [
     description:
       "Six-panel structured cap in deep red with embroidered TS logo on the front panel. Adjustable strap with metal clasp. Part of the SS25 collection.",
     sizes: ["ONE SIZE"],
+    colors: ["Red", "Blue", "Indigo"],
     tag: "SALE",
     inStock: true,
   },
@@ -179,6 +186,7 @@ export const products: Product[] = [
     description:
       "Heavyweight zip-up hoodie in off-white with red Toxic Society screenprint and barbed wire graphic sleeve prints. Oversized fit with dropped shoulders.",
     sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: [],
     inStock: true,
   },
 ];

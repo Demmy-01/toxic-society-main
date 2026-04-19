@@ -41,7 +41,7 @@ declare global {
 interface PaystackOptions {
   key: string;
   email: string;
-  amount: number; // in kobo (NGN × 100) or subunit of chosen currency
+  amount: number;
   currency: string;
   ref: string;
   label?: string;
@@ -49,11 +49,7 @@ interface PaystackOptions {
   onClose: () => void;
 }
 
-// ─── API endpoint (Vercel serverless function) ───────────────────────────────
-// Works locally with `vercel dev`, and automatically in Vercel production.
-// The SECRET key never appears here — it lives in process.env on the server.
 const VERIFY_FN_URL = "/api/verify-payment";
-// Public key — intentionally client-side (Paystack requires it for the popup)
 const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string;
 
 // ─── Generate a unique payment reference ─────────────────────────────────────
@@ -119,7 +115,6 @@ export function CheckoutModal() {
   const [promoInput, setPromoInput] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState("");
-  // OWASP A04: rate-limit promo attempts — max 5 per session to prevent DB enumeration
   const [promoAttempts, setPromoAttempts] = useState(0);
   const MAX_PROMO_ATTEMPTS = 5;
   const [appliedDiscount, setAppliedDiscount] = useState<{
@@ -297,7 +292,6 @@ export function CheckoutModal() {
     }
   };
 
-  // ─── Open Paystack popup ──────────────────────────────────────────────────
   const initiatePayment = (profile: typeof form) => {
     if (!paystackReady || !window.PaystackPop) {
       setPayError("Payment system is still loading. Please try again.");
@@ -363,7 +357,7 @@ export function CheckoutModal() {
   const hasProfile = !!customerProfile && !!customerProfile.delivery_location;
   const isProcessing = step === "paying" || step === "verifying";
 
-  // ─── Promo code section ──────────────────────────────────────────────────
+  // ─── Promo code section ─────────────
   const PromoSection = () => (
     <div className="border border-dashed border-gray-200 rounded-lg p-3">
       {appliedDiscount ? (

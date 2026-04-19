@@ -31,6 +31,18 @@ interface Drop {
 const CATEGORIES = ['Hoodies', 'T-Shirts', 'Jackets', 'Pants', 'Accessories', 'Caps', 'Tops', 'Bottoms'];
 const COLLECTIONS = ['Core', 'Limited', 'Seasonal'];
 const TAGS = ['NEW', 'SALE', 'LIMITED', 'EXCLUSIVE'];
+const MAX_IMAGES = 5;
+
+const COLOR_OPTIONS = [
+  { name: 'Red',    hex: '#EF4444' },
+  { name: 'Orange', hex: '#F97316' },
+  { name: 'Yellow', hex: '#EAB308' },
+  { name: 'Green',  hex: '#22C55E' },
+  { name: 'Blue',   hex: '#3B82F6' },
+  { name: 'Beige',  hex: '#D4C5A9' },
+  { name: 'White',  hex: '#FFFFFF' },
+  { name: 'Black',  hex: '#1a1a1a' },
+];
 
 const emptyForm = {
   name: '',
@@ -39,6 +51,7 @@ const emptyForm = {
   price: '',
   original_price: '',
   sizes: [] as string[],
+  colors: [] as string[],
   description: '',
   tag: '',
   in_stock: true,
@@ -96,7 +109,10 @@ export default function Products({ onLogout }: ProductsProps) {
   // Image handling
   const handleImageFiles = (files: FileList | null) => {
     if (!files) return;
-    const arr = Array.from(files).filter((f) => f.type.startsWith('image/'));
+    const currentTotal = existingImages.length + imageFiles.length;
+    const remaining = MAX_IMAGES - currentTotal;
+    if (remaining <= 0) return;
+    const arr = Array.from(files).filter((f) => f.type.startsWith('image/')).slice(0, remaining);
     setImageFiles((prev) => [...prev, ...arr]);
     arr.forEach((f) => {
       const reader = new FileReader();
@@ -146,6 +162,7 @@ export default function Products({ onLogout }: ProductsProps) {
       price: String(p.price),
       original_price: p.original_price ? String(p.original_price) : '',
       sizes: p.sizes ?? [],
+      colors: (p as any).colors ?? [],
       description: p.description ?? '',
       tag: p.tag ?? '',
       in_stock: p.in_stock,
@@ -176,6 +193,7 @@ export default function Products({ onLogout }: ProductsProps) {
       original_price: form.original_price ? parseFloat(form.original_price) : null,
       images: allImages,
       sizes: form.sizes,
+      colors: form.colors,
       description: form.description || null,
       tag: form.tag || null,
       in_stock: form.in_stock,
@@ -209,6 +227,15 @@ export default function Products({ onLogout }: ProductsProps) {
       sizes: prev.sizes.includes(size)
         ? prev.sizes.filter((s) => s !== size)
         : [...prev.sizes, size],
+    }));
+  };
+
+  const toggleColor = (color: string) => {
+    setForm((prev) => ({
+      ...prev,
+      colors: prev.colors.includes(color)
+        ? prev.colors.filter((c) => c !== color)
+        : [...prev.colors, color],
     }));
   };
 
@@ -521,6 +548,36 @@ export default function Products({ onLogout }: ProductsProps) {
                 </div>
               </div>
 
+              {/* Colors */}
+              <div>
+                <label className="block text-sm text-neutral-300 mb-3">Available Colors</label>
+                <div className="flex flex-wrap gap-3">
+                  {COLOR_OPTIONS.map((col) => {
+                    const active = form.colors.includes(col.name);
+                    return (
+                      <button
+                        key={col.name}
+                        type="button"
+                        onClick={() => toggleColor(col.name)}
+                        title={col.name}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-all cursor-pointer border ${
+                          active
+                            ? 'border-white text-white bg-white/10'
+                            : 'border-neutral-700 text-neutral-400 hover:border-neutral-500'
+                        }`}
+                      >
+                        <span
+                          className="w-4 h-4 rounded-full shrink-0 ring-1 ring-white/20"
+                          style={{ backgroundColor: col.hex }}
+                        />
+                        {col.name}
+                        {active && <Check className="w-3 h-3 ml-0.5 text-white" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Description */}
               <div>
                 <label className="block text-sm text-neutral-300 mb-2">Description</label>
@@ -535,36 +592,45 @@ export default function Products({ onLogout }: ProductsProps) {
 
               {/* Image Upload */}
               <div>
-                <label className="block text-sm text-neutral-300 mb-2">Product Images</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm text-neutral-300">Product Images</label>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    (existingImages.length + imageFiles.length) >= MAX_IMAGES
+                      ? 'bg-[#dc2626]/20 text-[#dc2626]'
+                      : 'bg-neutral-800 text-neutral-400'
+                  }`}>
+                    {existingImages.length + imageFiles.length} / {MAX_IMAGES} photos
+                  </span>
+                </div>
 
-                {/* Existing images (edit mode) */}
-                {existingImages.length > 0 && (
+                {/* All image previews together */}
+                {(existingImages.length > 0 || imagePreviews.length > 0) && (
                   <div className="flex flex-wrap gap-3 mb-3">
-                    {existingImages.map((url) => (
-                      <div key={url} className="relative w-20 h-20 rounded-lg overflow-hidden border border-neutral-800">
+                    {existingImages.map((url, idx) => (
+                      <div key={url} className="relative w-20 h-20 rounded-lg overflow-hidden border border-neutral-800 group">
+                        {idx === 0 && (
+                          <span className="absolute bottom-0 left-0 right-0 bg-[#dc2626] text-white text-[9px] text-center py-0.5 z-10">Cover</span>
+                        )}
                         <img src={url} alt="" className="w-full h-full object-cover" />
                         <button
                           type="button"
                           onClick={() => removeExistingImage(url)}
-                          className="absolute top-1 right-1 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center cursor-pointer"
+                          className="absolute top-1 right-1 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X className="w-3 h-3 text-white" />
                         </button>
                       </div>
                     ))}
-                  </div>
-                )}
-
-                {/* New image previews */}
-                {imagePreviews.length > 0 && (
-                  <div className="flex flex-wrap gap-3 mb-3">
                     {imagePreviews.map((src, i) => (
-                      <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-neutral-700">
+                      <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-[#dc2626]/50 group">
+                        {existingImages.length === 0 && i === 0 && (
+                          <span className="absolute bottom-0 left-0 right-0 bg-[#dc2626] text-white text-[9px] text-center py-0.5 z-10">Cover</span>
+                        )}
                         <img src={src} alt="" className="w-full h-full object-cover" />
                         <button
                           type="button"
                           onClick={() => removeNewImage(i)}
-                          className="absolute top-1 right-1 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center cursor-pointer"
+                          className="absolute top-1 right-1 w-5 h-5 bg-black/70 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <X className="w-3 h-3 text-white" />
                         </button>
@@ -573,14 +639,22 @@ export default function Products({ onLogout }: ProductsProps) {
                   </div>
                 )}
 
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-neutral-800 rounded-xl p-8 text-center hover:border-[#dc2626] transition-colors cursor-pointer"
-                >
-                  <Upload className="w-8 h-8 text-neutral-600 mx-auto mb-2" />
-                  <p className="text-neutral-400 text-sm">Click to upload images</p>
-                  <p className="text-neutral-600 text-xs mt-1">PNG, JPG, WEBP up to 10MB each</p>
-                </div>
+                {(existingImages.length + imageFiles.length) < MAX_IMAGES ? (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-neutral-800 rounded-xl p-6 text-center hover:border-[#dc2626] transition-colors cursor-pointer"
+                  >
+                    <Upload className="w-7 h-7 text-neutral-600 mx-auto mb-2" />
+                    <p className="text-neutral-400 text-sm">Click to upload images</p>
+                    <p className="text-neutral-600 text-xs mt-1">PNG, JPG, WEBP · up to 10MB each · max {MAX_IMAGES} total</p>
+                    <p className="text-neutral-600 text-xs mt-0.5">First image = cover photo · Label angles (front, back, side…)</p>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-[#dc2626]/30 rounded-xl p-4 text-center bg-[#dc2626]/5">
+                    <p className="text-[#dc2626] text-sm">Maximum {MAX_IMAGES} images reached</p>
+                    <p className="text-neutral-500 text-xs mt-1">Remove a photo above to add another</p>
+                  </div>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
