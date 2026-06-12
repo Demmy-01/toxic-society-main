@@ -35,9 +35,12 @@ export default function Login({ onLogin }: LoginProps) {
     }
 
     // Login successful
-    if (authData.user) {
+    if (authData?.session?.user || authData?.user) {
       setIsLoading(false);
       onLogin();
+    } else {
+      setIsLoading(false);
+      setError("Login succeeded but no user data returned. Please try again.");
     }
   };
 

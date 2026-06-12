@@ -12,6 +12,7 @@ import {
   XCircle,
   AlertCircle,
   ShieldCheck,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -88,11 +89,19 @@ export function CheckoutModal() {
   const {
     user,
     customerProfile,
-    signInWithGoogle,
+    signUp,
+    logIn,
     saveCustomerProfile,
     showCheckoutModal,
     setShowCheckoutModal,
   } = useAuth();
+
+  // Auth mode & forms for checkout
+  const [checkoutAuthMode, setCheckoutAuthMode] = useState<'login' | 'signup'>('login');
+  const [signUpForm2, setSignUpForm2] = useState({ name: '', email: '', phone: '', password: '' });
+  const [loginForm2, setLoginForm2] = useState({ email: '', password: '' });
+  const [signingIn, setSigningIn] = useState(false);
+  const [signInError, setSignInError] = useState('');
   const { items, totalPrice, clearCart } = useCart();
   const { currency, formatPrice, ratesLoading } = useCurrency();
 
@@ -580,59 +589,144 @@ export function CheckoutModal() {
           )}
 
           <div className="px-6 py-6">
-            {/* ─── Not logged in ─── */}
+            {/* ─── Not logged in — Login / Sign Up ─── */}
             {!user && (
-              <div className="flex flex-col items-center text-center gap-6">
-                <div>
-                  <p
+              <div className="flex flex-col gap-4">
+                {/* Tabs */}
+                <div className="flex border-b border-gray-200 mb-1">
+                  <button
+                    type="button"
+                    onClick={() => { setCheckoutAuthMode('login'); setSignInError(''); }}
                     style={{
                       fontFamily: "'Bebas Neue', cursive",
                       letterSpacing: "2px",
+                      borderBottomColor: checkoutAuthMode === 'login' ? '#C41E3A' : 'transparent',
+                      color: checkoutAuthMode === 'login' ? '#C41E3A' : '#9CA3AF',
                     }}
-                    className="text-2xl text-gray-900 mb-2"
+                    className="flex-1 pb-2.5 text-lg border-b-2 transition-colors cursor-pointer"
                   >
-                    Sign in to continue
-                  </p>
-                  <p
-                    style={{ fontFamily: "'Inter', sans-serif" }}
-                    className="text-sm text-gray-400"
+                    Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setCheckoutAuthMode('signup'); setSignInError(''); }}
+                    style={{
+                      fontFamily: "'Bebas Neue', cursive",
+                      letterSpacing: "2px",
+                      borderBottomColor: checkoutAuthMode === 'signup' ? '#C41E3A' : 'transparent',
+                      color: checkoutAuthMode === 'signup' ? '#C41E3A' : '#9CA3AF',
+                    }}
+                    className="flex-1 pb-2.5 text-lg border-b-2 transition-colors cursor-pointer"
                   >
-                    We use your Google account to save your delivery details for
-                    faster future checkouts.
-                  </p>
+                    Sign Up
+                  </button>
                 </div>
-                <button
-                  onClick={() => signInWithGoogle(true)}
-                  className="w-full flex items-center justify-center gap-3 border border-gray-200 py-3 px-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                    />
-                  </svg>
-                  Continue with Google
-                </button>
-                <p
-                  style={{ fontFamily: "'Inter', sans-serif" }}
-                  className="text-xs text-gray-400"
-                >
-                  Your cart will be preserved. We never post without your
-                  permission.
-                </p>
+
+                {signInError && (
+                  <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-xs text-red-600 bg-red-50 p-2 rounded text-center">{signInError}</p>
+                )}
+
+                {/* ── LOGIN ── */}
+                {checkoutAuthMode === 'login' && (
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      setSigningIn(true);
+                      setSignInError('');
+                      sessionStorage.setItem('ts_checkout_pending', 'true');
+                      const { error } = await logIn({
+                        email: loginForm2.email.trim(),
+                        password: loginForm2.password,
+                      });
+                      if (error) {
+                        setSignInError(error);
+                        sessionStorage.removeItem('ts_checkout_pending');
+                      }
+                      setSigningIn(false);
+                    }}
+                    className="flex flex-col gap-3"
+                  >
+                    <div>
+                      <label style={{ fontFamily: "'Inter', sans-serif" }} className="block text-xs text-gray-500 uppercase tracking-widest mb-1.5">Email *</label>
+                      <div className="relative">
+                        <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input required type="email" value={loginForm2.email} onChange={(e) => setLoginForm2(p => ({ ...p, email: e.target.value }))} placeholder="your@email.com" style={{ fontFamily: "'Inter', sans-serif" }} className="w-full border border-gray-200 pl-9 pr-4 py-2.5 text-sm outline-none focus:border-red-700 transition-colors" />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ fontFamily: "'Inter', sans-serif" }} className="block text-xs text-gray-500 uppercase tracking-widest mb-1.5">Password *</label>
+                      <div className="relative">
+                        <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input required type="password" value={loginForm2.password} onChange={(e) => setLoginForm2(p => ({ ...p, password: e.target.value }))} placeholder="Enter your password" style={{ fontFamily: "'Inter', sans-serif" }} className="w-full border border-gray-200 pl-9 pr-4 py-2.5 text-sm outline-none focus:border-red-700 transition-colors" />
+                      </div>
+                    </div>
+                    <button type="submit" disabled={signingIn} style={{ backgroundColor: "#C41E3A", fontFamily: "'Bebas Neue', cursive", letterSpacing: "3px" }} className="w-full text-white py-3.5 text-lg transition-all cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">
+                      {signingIn ? (<><Loader2 size={18} className="animate-spin" /> Logging In...</>) : 'Login'}
+                    </button>
+                    <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-xs text-gray-400 text-center">
+                      Don't have an account? <button type="button" onClick={() => { setCheckoutAuthMode('signup'); setSignInError(''); }} style={{ color: '#C41E3A' }} className="underline cursor-pointer">Sign up</button>
+                    </p>
+                  </form>
+                )}
+
+                {/* ── SIGN UP ── */}
+                {checkoutAuthMode === 'signup' && (
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      setSigningIn(true);
+                      setSignInError('');
+                      sessionStorage.setItem('ts_checkout_pending', 'true');
+                      const { error } = await signUp({
+                        name: signUpForm2.name.trim(),
+                        email: signUpForm2.email.trim(),
+                        phone: signUpForm2.phone.trim(),
+                        password: signUpForm2.password,
+                      });
+                      if (error) {
+                        setSignInError(error);
+                        sessionStorage.removeItem('ts_checkout_pending');
+                      }
+                      setSigningIn(false);
+                    }}
+                    className="flex flex-col gap-3"
+                  >
+                    <div>
+                      <label style={{ fontFamily: "'Inter', sans-serif" }} className="block text-xs text-gray-500 uppercase tracking-widest mb-1.5">Full Name *</label>
+                      <div className="relative">
+                        <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input required type="text" value={signUpForm2.name} onChange={(e) => setSignUpForm2(p => ({ ...p, name: e.target.value }))} placeholder="Your full name" maxLength={100} style={{ fontFamily: "'Inter', sans-serif" }} className="w-full border border-gray-200 pl-9 pr-4 py-2.5 text-sm outline-none focus:border-red-700 transition-colors" />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ fontFamily: "'Inter', sans-serif" }} className="block text-xs text-gray-500 uppercase tracking-widest mb-1.5">Email *</label>
+                      <div className="relative">
+                        <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input required type="email" value={signUpForm2.email} onChange={(e) => setSignUpForm2(p => ({ ...p, email: e.target.value }))} placeholder="your@email.com" maxLength={254} style={{ fontFamily: "'Inter', sans-serif" }} className="w-full border border-gray-200 pl-9 pr-4 py-2.5 text-sm outline-none focus:border-red-700 transition-colors" />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ fontFamily: "'Inter', sans-serif" }} className="block text-xs text-gray-500 uppercase tracking-widest mb-1.5">Phone *</label>
+                      <div className="relative">
+                        <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input required type="tel" value={signUpForm2.phone} onChange={(e) => setSignUpForm2(p => ({ ...p, phone: e.target.value }))} placeholder="+234 800 000 0000" maxLength={20} style={{ fontFamily: "'Inter', sans-serif" }} className="w-full border border-gray-200 pl-9 pr-4 py-2.5 text-sm outline-none focus:border-red-700 transition-colors" />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ fontFamily: "'Inter', sans-serif" }} className="block text-xs text-gray-500 uppercase tracking-widest mb-1.5">Password *</label>
+                      <div className="relative">
+                        <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input required type="password" value={signUpForm2.password} onChange={(e) => setSignUpForm2(p => ({ ...p, password: e.target.value }))} placeholder="Create a password" minLength={6} style={{ fontFamily: "'Inter', sans-serif" }} className="w-full border border-gray-200 pl-9 pr-4 py-2.5 text-sm outline-none focus:border-red-700 transition-colors" />
+                      </div>
+                    </div>
+                    <button type="submit" disabled={signingIn} style={{ backgroundColor: "#C41E3A", fontFamily: "'Bebas Neue', cursive", letterSpacing: "3px" }} className="w-full text-white py-3.5 text-lg transition-all cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">
+                      {signingIn ? (<><Loader2 size={18} className="animate-spin" /> Creating Account...</>) : 'Sign Up'}
+                    </button>
+                    <p style={{ fontFamily: "'Inter', sans-serif" }} className="text-xs text-gray-400 text-center">
+                      Already have an account? <button type="button" onClick={() => { setCheckoutAuthMode('login'); setSignInError(''); }} style={{ color: '#C41E3A' }} className="underline cursor-pointer">Login</button>
+                    </p>
+                  </form>
+                )}
               </div>
             )}
 

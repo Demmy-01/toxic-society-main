@@ -329,7 +329,22 @@ export default function Products({ onLogout }: ProductsProps) {
             <div key={product.id} className="bg-[#1a1a1a] border border-neutral-800 rounded-2xl overflow-hidden hover:border-neutral-700 transition-all group">
               <div className="aspect-square bg-[#0f0f0f] overflow-hidden relative">
                 {product.images?.[0] ? (
-                  <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <img
+                    src={product.images[0]}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      // Hide broken image, show placeholder
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                      const parent = (e.currentTarget as HTMLImageElement).parentElement;
+                      if (parent) {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'w-full h-full flex items-center justify-center';
+                        placeholder.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#404040" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
+                        parent.appendChild(placeholder);
+                      }
+                    }}
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <ImageIcon className="w-10 h-10 text-neutral-700" />
@@ -393,7 +408,7 @@ export default function Products({ onLogout }: ProductsProps) {
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-[#0f0f0f] rounded-lg overflow-hidden shrink-0">
                           {product.images?.[0]
-                            ? <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                            ? <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                             : <ImageIcon className="w-5 h-5 text-neutral-700 m-auto mt-3" />
                           }
                         </div>

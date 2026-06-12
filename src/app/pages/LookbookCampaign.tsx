@@ -59,7 +59,7 @@ export function LookbookCampaign() {
     quote: `"${campaign.tagline}"`,
   };
 
-  const campaignProducts = products.filter((p) => campaign.products.includes(p.id));
+  const campaignProducts = products.filter((p) => campaign.products.includes(Number(p.id)));
   const currentIndex = campaigns.findIndex((c) => c.slug === slug);
   const prevCampaign = campaigns[currentIndex - 1];
   const nextCampaign = campaigns[currentIndex + 1];

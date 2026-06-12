@@ -26,11 +26,14 @@ interface DBProduct {
   category: string;
   collection: string;
   sizes: string[];
+  colors: string[];
   description: string | null;
   tag: string | null;
   in_stock: boolean;
   drop_id: string | null;
 }
+
+import { PRODUCT_IMAGES } from "../data/products";
 
 /** Checks if a drop is live or if its countdown has elapsed */
 function isDropLive(drop: DBDrop, now: number): boolean {
@@ -39,17 +42,29 @@ function isDropLive(drop: DBDrop, now: number): boolean {
   return false;
 }
 
+// Fallback image for drop products based on name
+function getDropProductImage(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes('polo') || n.includes('flame polo')) return PRODUCT_IMAGES.sweatshirt;
+  if (n.includes('belt')) return PRODUCT_IMAGES.belt;
+  if (n.includes('cap') || n.includes('hat')) return PRODUCT_IMAGES.cap;
+  return PRODUCT_IMAGES.sweatshirt2;
+}
+
 function dbToProduct(p: DBProduct, dropName?: string) {
+  const hasImages = p.images && p.images.length > 0 && p.images[0] !== '';
+  const fallback = getDropProductImage(p.name);
   return {
     id: p.id,
     name: p.name,
     price: p.price,
     originalPrice: p.original_price ?? undefined,
-    image: p.images?.[0] ?? "",
-    images: p.images ?? [],
+    image: hasImages ? p.images[0] : fallback,
+    images: hasImages ? p.images : [fallback],
     category: p.category,
     collection: p.collection,
     sizes: p.sizes ?? [],
+    colors: p.colors ?? [],
     description: p.description ?? "",
     tag: p.tag as any,
     inStock: p.in_stock,
@@ -88,17 +103,17 @@ export function Drops() {
         .order("drop_date", { ascending: true });
 
       if (drops) {
-        const active = drops.filter(
-          (d) => d.status === "UPCOMING" || d.status === "LIVE",
+        const active = (drops as DBDrop[]).filter(
+          (d: DBDrop) => d.status === "UPCOMING" || d.status === "LIVE",
         );
         setUpcomingDrop(active[0] ?? null);
         setActiveDrops(active);
 
         // Include LIVE in archive so they show with "Shop Now"
-        setPastDrops(drops.filter((d) => d.status !== "UPCOMING"));
+        setPastDrops((drops as DBDrop[]).filter((d: DBDrop) => d.status !== "UPCOMING"));
 
         if (active.length > 0) {
-          const ids = active.map((d) => d.id);
+          const ids = active.map((d: DBDrop) => d.id);
           const { data: prods } = await supabase
             .from("products")
             .select("*")

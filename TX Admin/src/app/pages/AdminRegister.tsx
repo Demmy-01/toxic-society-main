@@ -23,13 +23,14 @@ export default function AdminRegister({
     const checkExistingAdmins = async () => {
       try {
         const { data, error } = await supabase
-          .from("admin_users")
-          .select("id", { count: "exact" });
+          .from("users")
+          .select("id")
+          .eq("is_admin", true);
 
         if (error) {
-          // Table doesn't exist yet - allow registration
+          // Table doesn't exist yet or error - allow registration
           setCanRegister(true);
-        } else if (data && data.length > 0) {
+        } else if (data && Array.isArray(data) && data.length > 0) {
           // Admin already exists
           setCanRegister(false);
           setError(
@@ -76,27 +77,17 @@ export default function AdminRegister({
     setIsLoading(true);
 
     try {
-      // Call the edge function to create admin
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-admin-user`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        },
-      );
+      // Register admin via our Python backend
+      const response = await fetch("http://localhost:8000/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, full_name: "Admin", is_admin: true }),
+      });
 
       const result = await response.json();
 
-      if (!response.ok || !result.success) {
-        setError(
-          result.error || "Failed to create admin account. Please try again.",
-        );
+      if (!response.ok) {
+        setError(result.detail || "Failed to create admin account. Please try again.");
         setIsLoading(false);
         return;
       }

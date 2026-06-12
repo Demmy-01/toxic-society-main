@@ -6,7 +6,16 @@ import React, {
   useCallback,
 } from "react";
 import { supabase } from "../lib/supabase";
-import type { User } from "@supabase/supabase-js";
+
+/** Minimal User type — matches what the mock client stores in localStorage. */
+export interface User {
+  id: string;
+  email?: string;
+  phone?: string;
+  full_name?: string;
+  user_metadata?: Record<string, any>;
+  is_admin?: boolean;
+}
 
 export interface CustomerProfile {
   id: string;
@@ -21,7 +30,18 @@ interface AuthContextType {
   user: User | null;
   customerProfile: CustomerProfile | null;
   loading: boolean;
-  signInWithGoogle: (fromCheckout?: boolean) => Promise<void>;
+  /** Register a new account */
+  signUp: (details: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+  }) => Promise<{ error?: string }>;
+  /** Login with existing email + password */
+  logIn: (details: {
+    email: string;
+    password: string;
+  }) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   saveCustomerProfile: (
     profile: Omit<CustomerProfile, "id" | "user_id">,
@@ -56,14 +76,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Listen for auth changes (including OAuth redirect callback)
+    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
-        // If returning from Google OAuth during checkout, re-open modal
         if (
           _event === "SIGNED_IN" &&
           sessionStorage.getItem("ts_checkout_pending") === "true"
@@ -79,15 +98,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
 
-  const signInWithGoogle = async (fromCheckout: boolean = false) => {
-    // Only mark checkout pending if signing in from checkout flow
-    if (fromCheckout) {
-      sessionStorage.setItem("ts_checkout_pending", "true");
+  /** Create customer profile after sign-up or login */
+  const createCustomerProfile = async (
+    userId: string,
+    details: { name: string; email: string; phone: string },
+  ) => {
+    try {
+      await supabase
+        .from("customers")
+        .upsert(
+          {
+            user_id: userId,
+            name: details.name,
+            email: details.email,
+            phone: details.phone,
+          },
+          { onConflict: "user_id" },
+        )
+        .select()
+        .single();
+      await fetchProfile(userId);
+    } catch (err) {
+      console.warn("Failed to create customer profile:", err);
     }
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
+  };
+
+  /**
+   * Register a new account with name, email, phone, password.
+   */
+  const signUp = async (details: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+  }): Promise<{ error?: string }> => {
+    const { data, error } = await supabase.auth.signUp({
+      name: details.name,
+      email: details.email,
+      phone: details.phone,
+      password: details.password,
     });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    // Create customer profile
+    const signedInUser = data?.user || data?.session?.user;
+    if (signedInUser) {
+      await createCustomerProfile(signedInUser.id, {
+        name: details.name,
+        email: details.email,
+        phone: details.phone,
+      });
+    }
+
+    return {};
+  };
+
+  /**
+   * Login with email + password.
+   */
+  const logIn = async (details: {
+    email: string;
+    password: string;
+  }): Promise<{ error?: string }> => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: details.email,
+      password: details.password,
+    });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    return {};
   };
 
   const signOut = async () => {
@@ -115,7 +200,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         customerProfile,
         loading,
-        signInWithGoogle,
+        signUp,
+        logIn,
         signOut,
         saveCustomerProfile,
         showCheckoutModal,

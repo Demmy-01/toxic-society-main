@@ -29,67 +29,95 @@ export const PRODUCT_IMAGES = {
   sweatshirt2: sweatshirt2Img,
 };
 
-// Fetch products from Supabase — call this in your pages
+// Fallback image mapping for known products (by name keyword)
+function getFallbackImage(name: string, id: string): string {
+  const n = name.toLowerCase();
+  // Exact static-ID matches first
+  const staticMap: Record<string, string> = {
+    'static-1': sweatshirtImg,
+    'static-2': beltImg,
+    'static-3': sweatshirt2Img,
+    'static-4': sweatshirt2Img,
+    'static-5': capImg,
+    'static-6': sweatshirt2Img,
+  };
+  if (staticMap[id]) return staticMap[id];
+
+  // Name-based fallback
+  if (n.includes('polo') || n.includes('flame polo')) return sweatshirtImg;
+  if (n.includes('belt')) return beltImg;
+  if (n.includes('cap') || n.includes('hat')) return capImg;
+  if (n.includes('hoodie') || n.includes('sweatshirt')) return sweatshirt2Img;
+  if (n.includes('tee') || n.includes('t-shirt') || n.includes('tshirt')) return sweatshirt2Img;
+  if (n.includes('cargo') || n.includes('pants') || n.includes('bottom')) return sweatshirt2Img;
+
+  // Generic fallback
+  return sweatshirt2Img;
+}
+
+
+// Fetch products from our custom Python backend
 export async function fetchProducts(): Promise<Product[]> {
   const { supabase } = await import('../../lib/supabase');
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  if (!supabaseUrl || supabaseUrl.includes('your-project')) {
-    console.error('❌ fetchProducts: VITE_SUPABASE_URL is not configured. Check your .env file.');
+  try {
+    // Get all LIVE drops
+    const { data: liveDrops, error: dropsError } = await supabase
+      .from('drops')
+      .select('id, name, status')
+      .eq('status', 'LIVE');
+
+    if (dropsError) {
+      console.warn('⚠️ fetchProducts: could not load drops:', dropsError.message);
+    }
+
+    const liveDropIds = new Set<string>((liveDrops ?? []).map((d: any) => d.id));
+
+    // Fetch ALL products that are in stock
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('in_stock', true)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ fetchProducts error:', error.message);
+      return [];
+    }
+
+    if (!data || data.length === 0) return [];
+
+    // Keep products with no drop OR products attached to a LIVE drop
+    const filtered = (data as any[]).filter((p: any) => !p.drop_id || liveDropIds.has(p.drop_id));
+
+    return filtered.map((p: any) => {
+      // Use DB images if available, otherwise fall back to local assets
+      const hasImages = p.images && p.images.length > 0 && p.images[0] !== '';
+      const fallback = getFallbackImage(p.name, p.id);
+      const primaryImage = hasImages ? p.images[0] : fallback;
+      const allImages = hasImages ? p.images : [fallback];
+
+      return {
+        id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        originalPrice: p.original_price ? Number(p.original_price) : undefined,
+        image: primaryImage,
+        images: allImages,
+        category: p.category,
+        collection: p.collection || '',
+        drop: p.drop_name || '',
+        description: p.description || '',
+        sizes: p.sizes || [],
+        colors: p.colors || [],
+        tag: p.tag || (liveDropIds.has(p.drop_id) ? "DROP" : undefined),
+        inStock: p.in_stock ?? true,
+      };
+    });
+  } catch (err) {
+    console.error('❌ fetchProducts exception:', err);
     return [];
   }
-
-  console.log('🛍️ fetchProducts: connecting to', supabaseUrl);
-
-  // Get all LIVE drops
-  const { data: liveDrops, error: dropsError } = await supabase
-    .from('drops')
-    .select('id, name, status')
-    .eq('status', 'LIVE');
-
-  if (dropsError) {
-    console.warn('⚠️ fetchProducts: could not load drops:', dropsError.message);
-  }
-
-  const liveDropIds = new Set(liveDrops?.map(d => d.id) ?? []);
-  console.log('🔴 LIVE drop IDs:', [...liveDropIds]);
-
-  // Fetch ALL products that are in stock with their drop info
-  const { data, error } = await supabase
-    .from('products')
-    .select('*, drops(name)')
-    .eq('in_stock', true)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('❌ fetchProducts: Supabase error:', error.message, error);
-    return [];
-  }
-
-  console.log(`✅ fetchProducts: got ${data?.length ?? 0} in-stock products from Supabase`);
-
-  if (!data || data.length === 0) return [];
-
-  // Keep products with no drop OR products attached to a LIVE drop
-  const filtered = data.filter(p => !p.drop_id || liveDropIds.has(p.drop_id));
-  console.log(`🔍 fetchProducts: ${filtered.length} products visible after drop filter`);
-
-  return filtered.map((p) => ({
-    id: p.id,
-    name: p.name,
-    price: Number(p.price),
-    originalPrice: p.original_price ? Number(p.original_price) : undefined,
-    image: p.images?.[0] || '',
-    images: p.images || [],
-    category: p.category,
-    collection: p.collection,
-    drop: (p.drops as { name: string } | null)?.name || '',
-    description: p.description || '',
-    sizes: p.sizes || [],
-    colors: p.colors || [],
-    tag: p.tag || (liveDropIds.has(p.drop_id) ? "DROP" : undefined),
-    inStock: p.in_stock ?? true,
-  }));
 }
 
 
