@@ -32,6 +32,7 @@ const CATEGORIES = ['Hoodies', 'T-Shirts', 'Jackets', 'Pants', 'Accessories', 'C
 const COLLECTIONS = ['Core', 'Limited', 'Seasonal'];
 const TAGS = ['NEW', 'SALE', 'LIMITED', 'EXCLUSIVE'];
 const MAX_IMAGES = 5;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 
 const COLOR_OPTIONS = [
   { name: 'Red',    hex: '#EF4444' },
@@ -77,6 +78,7 @@ export default function Products({ onLogout }: ProductsProps) {
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+  const [fileSizeError, setFileSizeError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProducts = async () => {
@@ -109,10 +111,27 @@ export default function Products({ onLogout }: ProductsProps) {
   // Image handling
   const handleImageFiles = (files: FileList | null) => {
     if (!files) return;
+    setFileSizeError('');
     const currentTotal = existingImages.length + imageFiles.length;
     const remaining = MAX_IMAGES - currentTotal;
     if (remaining <= 0) return;
-    const arr = Array.from(files).filter((f) => f.type.startsWith('image/')).slice(0, remaining);
+    const imageArr = Array.from(files).filter((f) => f.type.startsWith('image/'));
+
+    // Check file sizes
+    const oversized = imageArr.filter((f) => f.size > MAX_FILE_SIZE);
+    if (oversized.length > 0) {
+      const names = oversized.map((f) => f.name).join(', ');
+      setFileSizeError(
+        `File${oversized.length > 1 ? 's' : ''} too large (max 5MB): ${names}. Please select smaller files.`
+      );
+      // Auto-dismiss after 4 seconds
+      setTimeout(() => setFileSizeError(''), 4000);
+      // Reset input so user can re-select
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    const arr = imageArr.slice(0, remaining);
     setImageFiles((prev) => [...prev, ...arr]);
     arr.forEach((f) => {
       const reader = new FileReader();
@@ -661,7 +680,7 @@ export default function Products({ onLogout }: ProductsProps) {
                   >
                     <Upload className="w-7 h-7 text-neutral-600 mx-auto mb-2" />
                     <p className="text-neutral-400 text-sm">Click to upload images</p>
-                    <p className="text-neutral-600 text-xs mt-1">PNG, JPG, WEBP · up to 10MB each · max {MAX_IMAGES} total</p>
+                    <p className="text-neutral-600 text-xs mt-1">PNG, JPG, WEBP · max 5MB each · max {MAX_IMAGES} total</p>
                     <p className="text-neutral-600 text-xs mt-0.5">First image = cover photo · Label angles (front, back, side…)</p>
                   </div>
                 ) : (
@@ -678,6 +697,12 @@ export default function Products({ onLogout }: ProductsProps) {
                   className="hidden"
                   onChange={(e) => handleImageFiles(e.target.files)}
                 />
+                {fileSizeError && (
+                  <div className="mt-3 flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                    <svg className="w-4 h-4 text-red-500 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <p className="text-sm text-red-400">{fileSizeError}</p>
+                  </div>
+                )}
               </div>
 
               {/* In stock toggle */}
