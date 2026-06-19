@@ -17,6 +17,8 @@ class ReviewBase(BaseModel):
 class ReviewCreate(ReviewBase):
     """Review creation schema."""
     product_id: str
+    author: Optional[str] = "Anonymous"
+    verified: bool = False
 
 
 class ReviewUpdate(BaseModel):

@@ -20,6 +20,10 @@ async def authenticate_user(db: Session, email: str, password: str) -> Optional[
     if not user.password_hash or not verify_password(password, user.password_hash):
         return None
     
+    # Reject suspended users
+    if not user.is_active:
+        return None
+    
     return user
 
 

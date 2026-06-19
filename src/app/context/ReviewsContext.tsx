@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { supabase } from "../../lib/supabase";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export interface Review {
   id: string;
@@ -27,7 +28,7 @@ function dbToReview(row: any): Review {
   return {
     id: row.id,
     productId: row.product_id,
-    author: row.author,
+    author: row.author ?? "Anonymous",
     rating: row.rating,
     title: row.title,
     body: row.body,
@@ -39,22 +40,33 @@ function dbToReview(row: any): Review {
 export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const didLoad = useRef(false);
 
-  // Load all reviews once on mount
-  useEffect(() => {
-    const load = async () => {
-      const { data, error } = await supabase
-        .from("reviews")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
+  // Load all reviews from backend
+  const fetchReviews = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/v1/reviews`);
+      if (!res.ok) {
+        console.error("Failed to load reviews:", res.status);
+        setLoading(false);
+        return;
+      }
+      const data = await res.json();
+      if (Array.isArray(data)) {
         setReviews(data.map(dbToReview));
       }
-      setLoading(false);
-    };
-    load();
+    } catch (err) {
+      console.error("Error loading reviews:", err);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (!didLoad.current) {
+      didLoad.current = true;
+      fetchReviews();
+    }
+  }, [fetchReviews]);
 
   const getProductReviews = useCallback(
     (productId: string) => reviews.filter((r) => r.productId === productId),
@@ -62,23 +74,39 @@ export function ReviewsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const addReview = useCallback(async (review: Omit<Review, "id" | "date">) => {
-    const { data, error } = await supabase
-      .from("reviews")
-      .insert({
-        product_id: review.productId,
-        author: review.author,
-        rating: review.rating,
-        title: review.title,
-        body: review.body,
-        verified: review.verified ?? false,
-      })
-      .select()
-      .single();
+    try {
+      const token = localStorage.getItem('ts_token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    if (!error && data) {
-      setReviews((prev) => [dbToReview(data), ...prev]);
+      const res = await fetch(`${API_URL}/api/v1/reviews`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          product_id: review.productId,
+          author: review.author,
+          rating: review.rating,
+          title: review.title,
+          body: review.body,
+          verified: review.verified ?? false,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("Failed to create review:", errData);
+        return;
+      }
+
+      const created = await res.json();
+      // Add to state immediately
+      setReviews((prev) => [dbToReview(created), ...prev]);
+    } catch (err) {
+      console.error("Error creating review:", err);
+      // Fallback: refetch all reviews
+      await fetchReviews();
     }
-  }, []);
+  }, [fetchReviews]);
 
   const getAverageRating = useCallback(
     (productId: string) => {

@@ -30,7 +30,7 @@ import {
 
 // ─── Paystack inline JS types ─────────────────────────────────────────────────
 // The public key is safe to use on the client. It only opens the payment popup.
-// All verification (using the secret key) happens in the Supabase edge function.
+// All verification (using the secret key) happens on the backend.
 declare global {
   interface Window {
     PaystackPop: {
@@ -51,7 +51,6 @@ interface PaystackOptions {
 }
 
 const VERIFY_FN_URL = "/api/verify-payment";
-const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string;
 
 // ─── Generate a unique payment reference ─────────────────────────────────────
 function generateRef(): string {
@@ -85,6 +84,31 @@ function usePaystackScript(): boolean {
   return loaded;
 }
 
+// ─── Fetch Paystack public key from backend ───────────────────────────────────
+let _cachedPaystackKey: string | null = null;
+
+function usePaystackPublicKey(): string | null {
+  const [key, setKey] = useState<string | null>(_cachedPaystackKey);
+
+  useEffect(() => {
+    if (_cachedPaystackKey) {
+      setKey(_cachedPaystackKey);
+      return;
+    }
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/config/paystack-key`)
+      .then((res) => res.json())
+      .then((data) => {
+        _cachedPaystackKey = data.publicKey;
+        setKey(data.publicKey);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch Paystack key:", err);
+      });
+  }, []);
+
+  return key;
+}
+
 export function CheckoutModal() {
   const {
     user,
@@ -106,6 +130,7 @@ export function CheckoutModal() {
   const { currency, formatPrice, ratesLoading } = useCurrency();
 
   const paystackReady = usePaystackScript();
+  const PAYSTACK_PUBLIC_KEY = usePaystackPublicKey();
 
   const [form, setForm] = useState({
     name: "",

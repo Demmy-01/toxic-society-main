@@ -18,8 +18,8 @@ const FALLBACK_RATES: Record<CurrencyCode, number> = {
 };
 
 const CURRENCY_META: Omit<Currency, "rate">[] = [
-  { code: "USD", symbol: "$", label: "US Dollar" },
   { code: "NGN", symbol: "₦", label: "Nigerian Naira" },
+  { code: "USD", symbol: "$", label: "US Dollar" },
   { code: "EUR", symbol: "€", label: "Euro" },
   { code: "GBP", symbol: "£", label: "British Pound" },
 ];
@@ -78,7 +78,7 @@ interface CurrencyContextValue {
 const CurrencyContext = createContext<CurrencyContextValue | null>(null);
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currencyCode, setCurrencyCode] = useState<CurrencyCode>("USD");
+  const [currencyCode, setCurrencyCode] = useState<CurrencyCode>("NGN");
   const [rates, setRates] = useState<Record<CurrencyCode, number>>(FALLBACK_RATES);
   const [ratesLoading, setRatesLoading] = useState(true);
   const [ratesError, setRatesError] = useState(false);

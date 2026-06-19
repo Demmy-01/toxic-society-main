@@ -98,6 +98,13 @@ async def api_root():
     }
 
 
+# Serve Paystack public key to the frontend
+@app.get("/api/v1/config/paystack-key")
+async def get_paystack_public_key():
+    """Return the Paystack public key for the frontend payment popup."""
+    return {"publicKey": settings.PAYSTACK_PUBLIC_KEY}
+
+
 # Root endpoint
 @app.get("/")
 async def root():

@@ -49,6 +49,14 @@ async def login(
     db: Session = Depends(get_db),
 ):
     """Login with email and password."""
+    # Check if the account is suspended before attempting auth
+    existing = db.query(User).filter(User.email == email).first()
+    if existing and not existing.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been suspended",
+        )
+
     user = await authenticate_user(db, email, password)
     
     if not user:

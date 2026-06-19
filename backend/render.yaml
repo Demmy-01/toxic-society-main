@@ -1,0 +1,45 @@
+databases:
+  - name: toxic-society-db
+    databaseName: toxic_society
+    plan: free
+    user: toxic_user
+
+services:
+  - type: web
+    name: toxic-society-api
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: toxic-society-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        value: placeholder
+      - key: GOOGLE_CLIENT_SECRET
+        value: placeholder
+      - key: GOOGLE_REDIRECT_URI
+        value: https://toxic-society-api.onrender.com/auth/google/callback
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: SMTP_EMAIL
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "False"
+      - key: PYTHON_VERSION
+        value: "3.11.0"

@@ -8,6 +8,8 @@
 
 type QueryResult = { data: any; error: { message: string } | null; count?: number | null };
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 class QueryBuilder {
   private table: string;
   private filters: Array<{ field: string; value: any }> = [];
@@ -28,7 +30,10 @@ class QueryBuilder {
 
   /** select(columns?, options?) — options.head=true for count-only queries */
   select(_columns: string = '*', options?: { count?: string; head?: boolean }) {
-    this.method = 'GET';
+    // Only set GET if no write method was already set
+    if (this.method === 'GET') {
+      this.method = 'GET';
+    }
     if (options?.head) {
       this._countOnly = true;
     }
@@ -110,7 +115,7 @@ class QueryBuilder {
       return { data: this.payload, error: null };
     }
 
-    let url = `http://localhost:8000/api/v1/${this.table}`;
+    let url = `${API_URL}/api/v1/${this.table}`;
 
     // Extract ID filter if any
     let id: string | null = null;
@@ -123,13 +128,13 @@ class QueryBuilder {
     if (this.table === 'customers') {
       const userIdFilter = this.filters.find(f => f.field === 'user_id');
       if (userIdFilter && this.method === 'GET') {
-        url = `http://localhost:8000/api/v1/customers/user/${userIdFilter.value}`;
+        url = `${API_URL}/api/v1/customers/user/${userIdFilter.value}`;
       } else if (this.method === 'POST' || this.method === 'PATCH') {
-        url = `http://localhost:8000/api/v1/customers/upsert`;
+        url = `${API_URL}/api/v1/customers/upsert`;
         this.method = 'POST';
       }
     } else if (id && (this.method === 'PATCH' || this.method === 'DELETE' || this._isSingle)) {
-      url = `http://localhost:8000/api/v1/${this.table}/${id}`;
+      url = `${API_URL}/api/v1/${this.table}/${id}`;
     }
 
     // Add query params for GET
@@ -311,7 +316,7 @@ class SupabaseAuth {
 
   async signInWithPassword({ email, password }: { email: string; password: string }) {
     try {
-      const res = await fetch(`http://localhost:8000/auth/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`, {
+      const res = await fetch(`${API_URL}/auth/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`, {
         method: 'POST',
       });
       const data = await res.json();
@@ -362,7 +367,7 @@ class SupabaseStorage {
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         try {
-          const res = await fetch("http://localhost:8000/api/v1/storage/upload", {
+          const res = await fetch(`${API_URL}/api/v1/storage/upload`, {
             method: "POST",
             headers,
             body: formData
@@ -379,7 +384,7 @@ class SupabaseStorage {
       getPublicUrl: (path: string) => {
         return {
           data: {
-            publicUrl: `http://localhost:8000/uploads/${bucket}/${path}`
+            publicUrl: `${API_URL}/uploads/${bucket}/${path}`
           }
         };
       },
@@ -388,7 +393,7 @@ class SupabaseStorage {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
         try {
-          await fetch("http://localhost:8000/api/v1/storage/delete", {
+          await fetch(`${API_URL}/api/v1/storage/delete`, {
             method: "DELETE",
             headers,
             body: JSON.stringify({ paths })

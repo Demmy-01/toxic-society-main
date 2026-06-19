@@ -10,8 +10,8 @@ from typing import Optional
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    # Database (MySQL)
-    DATABASE_URL: str = "mysql+pymysql://root:@localhost:3306/toxic_society"
+    # Database (PostgreSQL)
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/toxic_society"
 
     # JWT
     SECRET_KEY: str = "change-me-in-production"

@@ -47,6 +47,10 @@ async def create_discount(
     data = discount_create.dict()
     data["code"] = data["code"].upper()
     
+    # Default start_date to now if not provided
+    if not data.get("start_date"):
+        data["start_date"] = datetime.utcnow()
+    
     # Check if code already exists
     existing = db.query(Discount).filter(Discount.code == data["code"]).first()
     if existing:

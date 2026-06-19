@@ -21,8 +21,8 @@ class DiscountBase(BaseModel):
     description: Optional[str] = None
     type: str  # 'percentage' or 'fixed'
     value: float = Field(..., gt=0)
-    min_purchase: float = Field(default=0, ge=0)
-    start_date: datetime
+    min_purchase: Optional[float] = Field(default=0, ge=0)
+    start_date: Optional[datetime] = None
     valid_until: Optional[datetime] = None
     usage_limit: Optional[int] = None
     uses_per_customer: int = 1
@@ -30,12 +30,15 @@ class DiscountBase(BaseModel):
 
 class DiscountCreate(DiscountBase):
     """Discount creation schema."""
-    pass
+    active: bool = True
+    uses: int = 0
 
 
 class DiscountUpdate(BaseModel):
     """Discount update schema."""
+    code: Optional[str] = None
     description: Optional[str] = None
+    type: Optional[str] = None
     value: Optional[float] = Field(None, gt=0)
     min_purchase: Optional[float] = None
     active: Optional[bool] = None

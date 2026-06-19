@@ -1,3 +1,5 @@
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 type QueryResult = { data: any; error: { message: string } | null };
 
 class QueryBuilder {
@@ -100,7 +102,7 @@ class QueryBuilder {
       return { data: this.payload, error: null };
     }
 
-    let url = `http://localhost:8000/api/v1/${this.table}`;
+    let url = `${API_URL}/api/v1/${this.table}`;
 
     // Extract ID filter if any
     let id: string | null = null;
@@ -113,21 +115,21 @@ class QueryBuilder {
     if (this.table === 'customers') {
       const userIdFilter = this.filters.find(f => f.field === 'user_id');
       if (userIdFilter && this.method === 'GET') {
-        url = `http://localhost:8000/api/v1/customers/user/${userIdFilter.value}`;
+        url = `${API_URL}/api/v1/customers/user/${userIdFilter.value}`;
       } else if (this.method === 'POST' || this.method === 'PATCH') {
-        url = `http://localhost:8000/api/v1/customers/upsert`;
+        url = `${API_URL}/api/v1/customers/upsert`;
         this.method = 'POST';
       }
     } else if (this.table === 'orders') {
       const customerIdFilter = this.filters.find(f => f.field === 'customer_id');
       if (customerIdFilter && this.method === 'GET') {
         // Use the customer-facing order history endpoint (requires user auth, not admin)
-        url = `http://localhost:8000/api/v1/orders/history`;
+        url = `${API_URL}/api/v1/orders/history`;
       } else if (id && (this.method === 'PATCH' || this.method === 'DELETE' || this._isSingle)) {
-        url = `http://localhost:8000/api/v1/${this.table}/${id}`;
+        url = `${API_URL}/api/v1/${this.table}/${id}`;
       }
     } else if (id && (this.method === 'PATCH' || this.method === 'DELETE' || this._isSingle)) {
-      url = `http://localhost:8000/api/v1/${this.table}/${id}`;
+      url = `${API_URL}/api/v1/${this.table}/${id}`;
     }
 
     // Add query params for GET
@@ -247,32 +249,11 @@ class QueryBuilder {
     }
   }
 
-  /**
-   * Makes the builder itself awaitable (Promise-like).
-   * This allows `await supabase.from('x').select('*').eq('field', val)` without
-   * calling .single() or .maybeSingle() at the end.
-   *
-   * We use a getter that returns a real Promise, so TypeScript treats it correctly.
-   */
-  // Expose as a proper Promise by implementing PromiseLike
-  // NOTE: We deliberately call this via a method, NOT via `then()` on the class itself,
-  //       to avoid the TS1320 "non-Promise thenable" error.
+
   execute(): Promise<QueryResult> {
     return this._execute();
   }
 }
-
-/**
- * Awaitable wrapper: allows `await supabase.from(...).select(...)` patterns
- * by wrapping the builder in a Proxy that intercepts `then` calls correctly.
- *
- * Actually the simplest fix is to just make the execute() method accessible
- * and rewrite usages. But since the codebase uses `await supabase.from(...).select(...).eq(...)`
- * we need the builder to be awaitable.
- *
- * The cleanest TypeScript-safe approach: return a real Promise from the builder
- * by making it implement PromiseLike<QueryResult>.
- */
 
 // We use a subclass trick: AwaitableQueryBuilder wraps QueryBuilder and is also a Promise
 class AwaitableQueryBuilder extends QueryBuilder implements PromiseLike<QueryResult> {
@@ -332,7 +313,7 @@ class SupabaseAuth {
 
   async signInWithPassword({ email, password }: { email: string; password: string }) {
     try {
-      const res = await fetch(`http://localhost:8000/auth/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`, {
+      const res = await fetch(`${API_URL}/auth/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`, {
         method: 'POST',
       });
       const data = await res.json();
@@ -355,7 +336,7 @@ class SupabaseAuth {
    */
   async signUp({ name, email, phone, password }: { name: string; email: string; phone: string; password: string }) {
     try {
-      const res = await fetch("http://localhost:8000/auth/register", {
+      const res = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -417,7 +398,7 @@ class SupabaseStorage {
         }
 
         try {
-          const res = await fetch("http://localhost:8000/api/v1/storage/upload", {
+          const res = await fetch(`${API_URL}/api/v1/storage/upload`, {
             method: "POST",
             headers,
             body: formData
@@ -434,7 +415,7 @@ class SupabaseStorage {
       getPublicUrl: (path: string) => {
         return {
           data: {
-            publicUrl: `http://localhost:8000/uploads/${bucket}/${path}`
+            publicUrl: `${API_URL}/uploads/${bucket}/${path}`
           }
         };
       }
