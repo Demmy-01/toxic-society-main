@@ -11,6 +11,7 @@ import Discounts from "./pages/Discounts";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import UsersAdmin from "./pages/Users";
+import AdminRegister from "./pages/AdminRegister";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -148,6 +149,16 @@ export default function App() {
           }
         />
         <Route path="/" element={<Navigate to="/login" />} />
+        <Route
+          path="/register"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/dashboard" />
+            ) : (
+              <AdminRegister onRegisterComplete={() => {}} />
+            )
+          }
+        />
       </Routes>
     </Router>
   );
