@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   base: '/ts-admin/',
+  envDir: path.resolve(__dirname, '..'),
   build: {
     outDir: '../dist/ts-admin',
     emptyOutDir: true,
