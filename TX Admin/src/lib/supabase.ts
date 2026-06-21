@@ -189,6 +189,16 @@ class QueryBuilder {
           const json = JSON.parse(text);
           msg = json.detail || msg;
         } catch { /* ignore */ }
+
+        // Auto-logout on 401 (expired/invalid token) — force re-login
+        if (response.status === 401) {
+          console.warn('Admin token expired or invalid — logging out');
+          localStorage.removeItem('ts_admin_token');
+          localStorage.removeItem('ts_admin_user');
+          window.location.reload();
+          return { data: null, error: { message: 'Session expired. Please log in again.' } };
+        }
+
         return { data: null, error: { message: msg } };
       }
 
