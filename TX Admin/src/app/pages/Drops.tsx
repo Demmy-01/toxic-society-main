@@ -72,10 +72,10 @@ export default function Drops({ onLogout }: DropsProps) {
   const uploadImage = async (): Promise<string | null> => {
     if (!imageFile) return existingImageUrl || null;
     const path = `drops/${Date.now()}-${imageFile.name.replace(/\s/g, '_')}`;
-    const { error } = await supabase.storage.from('drop-images').upload(path, imageFile, { upsert: true });
-    if (error) return existingImageUrl || null;
-    const { data } = supabase.storage.from('drop-images').getPublicUrl(path);
-    return data.publicUrl;
+    const { data, error } = await supabase.storage.from('drop-images').upload(path, imageFile, { upsert: true });
+    if (error || !data?.path) return existingImageUrl || null;
+    // data.path is now the full Cloudinary URL
+    return data.path;
   };
 
   const openAdd = () => {

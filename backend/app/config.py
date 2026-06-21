@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176"
     BACKEND_URL: str = "http://localhost:8000"
 
+    # Cloudinary
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
+
     # Environment
     ENVIRONMENT: str = "development"
     DEBUG: bool = True

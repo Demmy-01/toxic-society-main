@@ -5,11 +5,11 @@ Toxic Society Backend API - Main application.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from app.config import get_settings
 from app.database import engine, Base
 from app.routes import auth, products, drops, discounts, reviews, customers, orders, storage, users
+import cloudinary
 import logging
 import os
 
@@ -29,6 +29,15 @@ async def lifespan(app: FastAPI):
     # Create tables if they don't exist
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables initialized")
+
+    # Configure Cloudinary
+    cloudinary.config(
+        cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+        api_key=settings.CLOUDINARY_API_KEY,
+        api_secret=settings.CLOUDINARY_API_SECRET,
+        secure=True,
+    )
+    logger.info("Cloudinary configured")
     
     yield
     
@@ -70,9 +79,7 @@ app.include_router(orders.router)
 app.include_router(storage.router)
 app.include_router(users.router)
 
-# Mount local uploads directory
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# NOTE: Local uploads directory removed — images now stored on Cloudinary
 
 
 # Health check endpoint

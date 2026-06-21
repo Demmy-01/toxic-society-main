@@ -149,15 +149,15 @@ export default function Products({ onLogout }: ProductsProps) {
     setExistingImages((prev) => prev.filter((u) => u !== url));
   };
 
-  // Upload images to Supabase Storage
+  // Upload images to Cloudinary via backend
   const uploadImages = async (): Promise<string[]> => {
     const urls: string[] = [];
     for (const file of imageFiles) {
       const path = `products/${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-      const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true });
-      if (!error) {
-        const { data } = supabase.storage.from('product-images').getPublicUrl(path);
-        urls.push(data.publicUrl);
+      const { data, error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true });
+      if (!error && data?.path) {
+        // data.path is now the full Cloudinary URL
+        urls.push(data.path);
       }
     }
     return urls;

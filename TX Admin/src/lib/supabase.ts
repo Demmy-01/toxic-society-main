@@ -374,7 +374,8 @@ class SupabaseStorage {
           });
           const data = await res.json();
           if (res.ok && data.success) {
-            return { data: { path: `${bucket}/${path}` }, error: null };
+            // Store the full Cloudinary URL so it persists across server restarts
+            return { data: { path: data.publicUrl }, error: null };
           }
           return { data: null, error: { message: data.detail || "Upload failed" } };
         } catch (err: any) {
@@ -382,6 +383,11 @@ class SupabaseStorage {
         }
       },
       getPublicUrl: (path: string) => {
+        // If the path is already a full Cloudinary URL, return it as-is
+        if (path.startsWith('http://') || path.startsWith('https://')) {
+          return { data: { publicUrl: path } };
+        }
+        // Fallback for legacy local paths (will 404 but won't crash)
         return {
           data: {
             publicUrl: `${API_URL}/uploads/${bucket}/${path}`
