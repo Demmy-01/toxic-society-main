@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { ArrowRight, Play } from "lucide-react";
+import { SEO } from "../components/SEO";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import flamImg from "../../assets/ts-tshirt-2.jpeg";
 import metalImg from "../../assets/86aeade7262b02c7fbb79d4cb1ce30e8984bff4e.png";
@@ -66,6 +67,11 @@ export function Lookbook() {
 
   return (
     <div className="bg-white min-h-screen">
+      <SEO
+        title="Lookbook"
+        description="Explore Toxic Society's seasonal lookbook campaigns. Editorial photography showcasing our streetwear collections and the culture behind the brand."
+        url="/lookbook"
+      />
       {/* Header */}
       <div style={{ backgroundColor: "#0f0f0f" }} className="py-20 text-center px-4">
         <p

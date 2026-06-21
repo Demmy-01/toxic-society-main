@@ -1,15 +1,90 @@
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <link rel="icon" type="image/png" href="./src/assets/logo-no-bg.png">
-      <title>Toxic Society</title>
-    </head>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <body>
-      <div id="root"></div>
-      <script type="module" src="/src/main.tsx"></script>
-    </body>
-  </html>
-  
+    <!-- Primary SEO -->
+    <title>Toxic Society — Premium Streetwear for the Dangerously Calm</title>
+    <meta name="description" content="Toxic Society is a premium streetwear brand. Shop limited-edition hoodies, tees, cargo pants and accessories. Bold designs. Exclusive drops. Uncompromisingly toxic." />
+    <meta name="keywords" content="toxic society, streetwear, hoodies, t-shirts, cargo pants, accessories, limited drops, urban fashion, street fashion, exclusive clothing" />
+    <meta name="author" content="Toxic Society" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://www.toxic-society.com/" />
+
+    <!-- Open Graph (Facebook, WhatsApp, Instagram) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Toxic Society — Premium Streetwear for the Dangerously Calm" />
+    <meta property="og:description" content="Shop limited-edition hoodies, tees, cargo pants and accessories. Bold designs. Exclusive drops." />
+    <meta property="og:image" content="https://www.toxic-society.com/og-image.jpg" />
+    <meta property="og:url" content="https://www.toxic-society.com/" />
+    <meta property="og:site_name" content="Toxic Society" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Toxic Society — Premium Streetwear" />
+    <meta name="twitter:description" content="Premium streetwear brand. Limited drops. Bold designs. Uncompromisingly toxic." />
+    <meta name="twitter:image" content="https://www.toxic-society.com/og-image.jpg" />
+
+    <!-- Favicon & Icons -->
+    <link rel="icon" type="image/png" href="/logo-no-bg.png" />
+    <link rel="apple-touch-icon" href="/logo-no-bg.png" />
+
+    <!-- Theme Color (mobile browser bar) -->
+    <meta name="theme-color" content="#0f0f0f" />
+    <meta name="msapplication-TileColor" content="#C41E3A" />
+
+    <!-- Preconnect to external origins for speed -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://toxic-society-api.onrender.com" />
+
+    <!-- Organization Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Toxic Society",
+      "url": "https://www.toxic-society.com",
+      "logo": "https://www.toxic-society.com/logo-no-bg.png",
+      "description": "Premium streetwear brand for those who are quietly bold and uncompromisingly toxic.",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "url": "https://www.toxic-society.com/about"
+      }
+    }
+    </script>
+
+    <!-- WebSite Schema (enables sitelinks search in Google) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Toxic Society",
+      "url": "https://www.toxic-society.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.toxic-society.com/shop?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+  </head>
+
+  <body>
+    <!-- Noscript fallback for search engines that don't run JS -->
+    <noscript>
+      <div style="padding: 2rem; text-align: center; font-family: sans-serif;">
+        <h1>Toxic Society</h1>
+        <p>Premium streetwear for the dangerously calm. Shop hoodies, tees, cargo pants and accessories.</p>
+        <p><a href="https://www.toxic-society.com/shop">Shop All Products</a></p>
+        <p><a href="https://www.toxic-society.com/drops">View Upcoming Drops</a></p>
+        <p><a href="https://www.toxic-society.com/about">About Toxic Society</a></p>
+      </div>
+    </noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

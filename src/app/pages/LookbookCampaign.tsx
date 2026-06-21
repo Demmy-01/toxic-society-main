@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { SEO } from "../components/SEO";
 import { campaigns } from "./Lookbook";
 import { products } from "../data/products";
 import { ProductCard } from "../components/ProductCard";
@@ -66,6 +67,12 @@ export function LookbookCampaign() {
 
   return (
     <div className="bg-white min-h-screen">
+      <SEO
+        title={`${campaign.name} — Lookbook`}
+        description={campaign.description}
+        image={campaign.heroUnsplash}
+        url={`/lookbook/${campaign.slug}`}
+      />
       {/* Hero */}
       <div className="relative h-screen min-h-[600px] max-h-[900px] overflow-hidden">
         <img

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
+import { SEO } from "../components/SEO";
 import { DropCountdown } from "../components/DropCountdown";
 import { ProductCard } from "../components/ProductCard";
 import { supabase } from "../../lib/supabase";
@@ -185,6 +186,11 @@ export function Drops() {
 
   return (
     <div className="bg-white min-h-screen">
+      <SEO
+        title="Drops"
+        description="Exclusive limited-edition drops from Toxic Society. Get notified for upcoming releases, shop live drops, and browse the archive."
+        url="/drops"
+      />
       {/* Countdown hero */}
       <DropCountdown
         targetDate={countdownDate}

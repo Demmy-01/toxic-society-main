@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { SEO } from "../components/SEO";
 import { ArrowRight, Zap } from "lucide-react";
 import { fetchProducts } from "../data/products";
 import type { Product } from "../data/products";
@@ -63,6 +64,11 @@ export function Home() {
 
   return (
     <div className="bg-white min-h-screen">
+      <SEO
+        title="Premium Streetwear for the Dangerously Calm"
+        description="Shop Toxic Society's latest streetwear collection. Limited-edition hoodies, tees, cargo pants and accessories. Bold designs. Exclusive drops."
+        url="/"
+      />
       {/* Hero */}
       <section className="relative overflow-hidden bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-0">

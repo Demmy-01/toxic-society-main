@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router";
+import { SEO } from "../components/SEO";
 import { fetchProducts } from "../data/products";
 import type { Product } from "../data/products";
 import { ProductCard } from "../components/ProductCard";
@@ -292,6 +293,11 @@ export function Shop() {
 
   return (
     <div className="bg-white min-h-screen">
+      <SEO
+        title="Shop All"
+        description="Browse the full Toxic Society collection. Hoodies, tees, cargo pants, accessories and more. Limited-edition streetwear drops."
+        url="/shop"
+      />
       {/* Page Header */}
       <div
         style={{ backgroundColor: "#0f0f0f" }}

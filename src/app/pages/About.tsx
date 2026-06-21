@@ -1,4 +1,5 @@
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { SEO } from "../components/SEO";
 import sweatshirtImg from "../../assets/09743e963667fce523552d94caf5de8bf4cf5241.png";
 import beltImg from "../../assets/belt.png";
 import { Link } from "react-router";
@@ -6,6 +7,11 @@ import { Link } from "react-router";
 export function About() {
   return (
     <div className="bg-white min-h-screen">
+      <SEO
+        title="About"
+        description="Born from the underground. Toxic Society makes clothing for those who are quiet enough to be underestimated, and bold enough to be unforgettable. Our story."
+        url="/about"
+      />
       {/* Hero */}
       <div style={{ backgroundColor: "#0f0f0f" }} className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">

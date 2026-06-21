@@ -1,0 +1,9 @@
+# Toxic Society — robots.txt
+User-agent: *
+Allow: /
+Disallow: /ts-admin/
+Disallow: /account
+Disallow: /history
+Disallow: /wishlist
+
+Sitemap: https://www.toxic-society.com/sitemap.xml

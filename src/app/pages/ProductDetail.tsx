@@ -12,6 +12,7 @@ import { useReviews } from "../context/ReviewsContext";
 import { ProductCard } from "../components/ProductCard";
 import { ReviewsSection } from "../components/ReviewsSection";
 import { useCurrency } from "../context/CurrencyContext";
+import { SEO } from "../components/SEO";
 
 /* ─── Color map ─── */
 const COLOR_HEX: Record<string, string> = {
@@ -202,6 +203,31 @@ export function ProductDetail() {
 
   return (
     <div className="bg-white min-h-screen">
+      <SEO
+        title={product.name}
+        description={product.description || `Shop the ${product.name} from Toxic Society. ${product.collection} collection. Premium streetwear.`}
+        image={gallery[0]}
+        url={`/product/${product.id}`}
+        type="product"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          image: gallery,
+          description: product.description || `${product.name} from the ${product.collection} collection.`,
+          brand: { "@type": "Brand", name: "Toxic Society" },
+          category: product.category,
+          offers: {
+            "@type": "Offer",
+            price: product.price,
+            priceCurrency: "NGN",
+            availability: product.inStock
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+            url: `https://www.toxic-society.com/product/${product.id}`,
+          },
+        }}
+      />
       {/* Lightbox */}
       {lightboxOpen && (
         <GalleryModal

@@ -1,8 +1,13 @@
 import { Link } from "react-router";
+import { Helmet } from "react-helmet-async";
 
 export function NotFound() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center bg-white text-center px-4">
+      <Helmet>
+        <title>Page Not Found — Toxic Society</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <p
         style={{ fontFamily: "'Bebas Neue', cursive", letterSpacing: "4px", color: "#C41E3A" }}
         className="text-9xl"
