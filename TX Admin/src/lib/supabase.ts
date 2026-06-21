@@ -144,8 +144,14 @@ class QueryBuilder {
         params.append("limit", "200");
         const categoryFilter = this.filters.find(f => f.field === 'category');
         if (categoryFilter) params.append("category", categoryFilter.value);
+        // Admin always fetches ALL products (including inactive) unless explicitly filtered
         const activeFilter = this.filters.find(f => f.field === 'is_active');
-        if (activeFilter) params.append("is_active", activeFilter.value.toString());
+        if (activeFilter) {
+          params.append("is_active", activeFilter.value.toString());
+        } else {
+          // No active filter = admin wants everything
+          params.append("is_active", "false");
+        }
       }
       const qs = params.toString();
       if (qs) url += `?${qs}`;

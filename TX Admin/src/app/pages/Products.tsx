@@ -83,10 +83,13 @@ export default function Products({ onLogout }: ProductsProps) {
 
   const fetchProducts = async () => {
     setLoadingProducts(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('products')
       .select('*')
       .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Failed to fetch products:', error.message);
+    }
     setProducts(data ?? []);
     setLoadingProducts(false);
   };
@@ -219,10 +222,18 @@ export default function Products({ onLogout }: ProductsProps) {
       drop_id: form.drop_id || null,
     };
 
+    let result;
     if (editId) {
-      await supabase.from('products').update(payload).eq('id', editId);
+      result = await supabase.from('products').update(payload).eq('id', editId);
     } else {
-      await supabase.from('products').insert(payload);
+      result = await supabase.from('products').insert(payload);
+    }
+
+    if (result.error) {
+      setSaving(false);
+      setSaveMsg(`Error: ${result.error.message}`);
+      console.error('Product save error:', result.error);
+      return;
     }
 
     setSaving(false);
@@ -236,8 +247,13 @@ export default function Products({ onLogout }: ProductsProps) {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this product?')) return;
-    await supabase.from('products').delete().eq('id', id);
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) {
+      alert(`Failed to delete: ${error.message}`);
+      console.error('Delete error:', error);
+      return;
+    }
+    await fetchProducts();
   };
 
   const toggleSize = (size: string) => {
@@ -717,6 +733,22 @@ export default function Products({ onLogout }: ProductsProps) {
                 <span className="text-sm text-neutral-300">In Stock</span>
               </div>
 
+              {/* Error display */}
+              {saveMsg && saveMsg.startsWith('Error:') && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                  <p className="text-sm text-red-400">{saveMsg}</p>
+                </div>
+              )}
+
+              {/* Success display */}
+              {saveMsg && !saveMsg.startsWith('Error:') && (
+                <div className="bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3">
+                  <p className="text-sm text-green-400 flex items-center gap-2">
+                    <Check className="w-4 h-4" /> {saveMsg}
+                  </p>
+                </div>
+              )}
+
               {/* Submit */}
               <div className="flex gap-3 pt-2">
                 <button
@@ -724,8 +756,8 @@ export default function Products({ onLogout }: ProductsProps) {
                   disabled={saving}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#dc2626] text-white rounded-xl hover:bg-[#b91c1c] transition-colors disabled:opacity-50 cursor-pointer"
                 >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saveMsg ? <Check className="w-4 h-4" /> : null}
-                  {saving ? 'Saving...' : saveMsg || (editId ? 'Update Product' : 'Add Product')}
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {saving ? 'Saving...' : (editId ? 'Update Product' : 'Add Product')}
                 </button>
                 <button
                   type="button"

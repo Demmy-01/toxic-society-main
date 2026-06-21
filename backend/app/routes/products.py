@@ -19,10 +19,20 @@ async def list_products(
     limit: int = Query(20, ge=1, le=500),
     category: str | None = None,
     search: str | None = None,
+    is_active: bool | None = Query(None),
     db: Session = Depends(get_db),
 ):
-    """List all active products with pagination and filters."""
-    query = db.query(Product).filter(Product.is_active == True)
+    """List products with pagination and filters.
+    
+    By default returns only active products. Pass is_active=false to include
+    inactive products, or omit the parameter for active-only.
+    """
+    query = db.query(Product)
+    
+    # Default to active-only if is_active is not explicitly specified
+    if is_active is None or is_active is True:
+        query = query.filter(Product.is_active == True)
+    # If is_active is False, return ALL products (admin use case)
     
     if category:
         query = query.filter(Product.category == category)
@@ -31,7 +41,7 @@ async def list_products(
         query = query.filter(Product.name.ilike(f"%{search}%"))
     
     total = query.count()
-    items = query.offset(skip).limit(limit).all()
+    items = query.order_by(Product.created_at.desc()).offset(skip).limit(limit).all()
     
     return {
         "items": items,

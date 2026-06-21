@@ -51,10 +51,13 @@ export default function Drops({ onLogout }: DropsProps) {
 
   const fetchDrops = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('drops')
       .select('*')
       .order('drop_date', { ascending: false });
+    if (error) {
+      console.error('Failed to fetch drops:', error.message);
+    }
     setDrops(data ?? []);
     setLoading(false);
   };
@@ -109,6 +112,7 @@ export default function Drops({ onLogout }: DropsProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSaveMsg('');
     const imgUrl = await uploadImage();
     const payload = {
       name: form.name,
@@ -120,11 +124,21 @@ export default function Drops({ onLogout }: DropsProps) {
       drop_date: form.drop_date ? new Date(form.drop_date).toISOString() : null,
       price: form.price ? parseFloat(form.price) : null,
     };
+
+    let result;
     if (editId) {
-      await supabase.from('drops').update(payload).eq('id', editId);
+      result = await supabase.from('drops').update(payload).eq('id', editId);
     } else {
-      await supabase.from('drops').insert(payload);
+      result = await supabase.from('drops').insert(payload);
     }
+
+    if (result.error) {
+      setSaving(false);
+      setSaveMsg(`Error: ${result.error.message}`);
+      console.error('Drop save error:', result.error);
+      return;
+    }
+
     setSaving(false);
     setSaveMsg(editId ? 'Drop updated!' : 'Drop created!');
     await fetchDrops();
@@ -133,8 +147,13 @@ export default function Drops({ onLogout }: DropsProps) {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this drop?')) return;
-    await supabase.from('drops').delete().eq('id', id);
-    setDrops((prev) => prev.filter((d) => d.id !== id));
+    const { error } = await supabase.from('drops').delete().eq('id', id);
+    if (error) {
+      alert(`Failed to delete: ${error.message}`);
+      console.error('Delete error:', error);
+      return;
+    }
+    await fetchDrops();
   };
 
   const statusColor = (s: string) =>
@@ -333,12 +352,28 @@ export default function Drops({ onLogout }: DropsProps) {
                   onChange={(e) => handleImageFile(e.target.files?.[0] ?? null)} />
               </div>
 
+              {/* Error display */}
+              {saveMsg && saveMsg.startsWith('Error:') && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                  <p className="text-sm text-red-400">{saveMsg}</p>
+                </div>
+              )}
+
+              {/* Success display */}
+              {saveMsg && !saveMsg.startsWith('Error:') && (
+                <div className="bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3">
+                  <p className="text-sm text-green-400 flex items-center gap-2">
+                    <Check className="w-4 h-4" /> {saveMsg}
+                  </p>
+                </div>
+              )}
+
               {/* Submit */}
               <div className="flex gap-3 pt-2">
                 <button type="submit" disabled={saving}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#dc2626] text-white rounded-xl hover:bg-[#b91c1c] transition-colors disabled:opacity-50 cursor-pointer">
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saveMsg ? <Check className="w-4 h-4" /> : null}
-                  {saving ? 'Saving...' : saveMsg || (editId ? 'Update Drop' : 'Create Drop')}
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {saving ? 'Saving...' : (editId ? 'Update Drop' : 'Create Drop')}
                 </button>
                 <button type="button" onClick={() => setShowForm(false)}
                   className="px-6 py-3 bg-[#0f0f0f] text-neutral-400 rounded-xl hover:text-white transition-colors cursor-pointer">
